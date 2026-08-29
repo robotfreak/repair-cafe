@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Repair-Café-Assistent</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/print.css">
+</head>
+<body>
+  <a class="skip-link" href="#view">Zum Inhalt springen</a>
+
+  <nav class="topnav" id="topnav" aria-label="Hauptnavigation">
+    <span class="brand">🔧 Repair-Café</span>
+    <a href="#/board" data-nav="board" class="nav-link">Board</a>
+    <a href="#/search" data-nav="search" class="nav-link">Suche</a>
+    <a href="#/documents" data-nav="documents" class="nav-link">Dokumente</a>
+    <a href="#/devices" data-nav="devices" class="nav-link">Geräte</a>
+    <span class="nav-author">
+      <label for="nav-author" class="nav-author-label">Techniker:in</label>
+      <input type="text" id="nav-author" maxlength="100" placeholder="Name …" autocomplete="name">
+    </span>
+    <button type="button" id="btn-new-ticket" class="btn btn-primary nav-new">+ Neuer Laufzettel</button>
+  </nav>
+
+  <main id="view" class="view" aria-live="polite">
+    <section class="loading">Lade …</section>
+  </main>
+
+  <!-- Modal: Neuer Laufzettel -->
+  <div class="modal-overlay" id="modal-new-ticket" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-head">
+        <h2 id="modal-title">Neuer Laufzettel</h2>
+        <button type="button" class="btn btn-ghost" data-close-modal aria-label="Schließen">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"><!-- per JS --></div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden role="status"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

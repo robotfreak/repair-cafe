@@ -1,0 +1,14 @@
+[Unit]
+Description=Repair Cafe Assistant (Flask)
+After=network-online.target ollama.service
+Wants=ollama.service
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/repair-cafe
+ExecStart=/home/pi/repair-cafe/.venv/bin/gunicorn --workers 2 --threads 4 --timeout 300 --bind 0.0.0.0:5002 run:app
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

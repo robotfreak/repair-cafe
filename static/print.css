@@ -1,0 +1,244 @@
+/* Repair-Café-Assistent – Druck-Stylesheet für Laufzettel (Task 11)
+   Wird in index.html zusammen mit style.css geladen; greift nur bei @media print.
+   Ziel: sauberer A5-quer-Laufzettel zum Anhängen ans Gerät. */
+
+@page {
+  size: A5 landscape;
+  margin: 1cm;
+}
+
+/* ---------- Screen-Elemente ausblenden ---------- */
+
+@media print {
+  .topnav,
+  .nav-new,
+  .skip-link,
+  .modal-overlay,
+  .toast,
+  .status-actions,
+  .entry-form,
+  .doc-upload,
+  .assistant-panel,
+  .chat-log,
+  .chat-input-row,
+  .back-link,
+  .waiver-box summary,
+  .waiver-details,
+  .search-row,
+  .tabs,
+  .tab,
+  .tab-pane,
+  .device-create,
+  .equipment-section,
+  .sk-editor,
+  .doc-actions,
+  .form,
+  button,
+  input,
+  select,
+  textarea {
+    display: none !important;
+  }
+
+  html, body {
+    background: #fff;
+    color: #000;
+    font-size: 10.5pt;
+    line-height: 1.35;
+  }
+
+  .view { padding: 0; max-width: none; }
+
+  .panel, .card {
+    box-shadow: none;
+    border: none;
+    background: #fff;
+    padding: 0;
+  }
+
+  /* Ticket-View einspaltig im Druck */
+  .ticket-view { display: block; }
+
+  /* Kopf: Gerät + Fehler + sichtbarer Status */
+  .ticket-head { display: block; border-bottom: 1.5pt solid #000; padding-bottom: 4pt; }
+  .ticket-head h1 { font-size: 14pt; margin: 0 0 2pt; }
+  .fault { font-size: 11pt; margin: 2pt 0; }
+
+  /* Status als Text sichtbar machen (Badge bleibt, Buttons sind weg) */
+  .badge {
+    border: 0.75pt solid #000;
+    color: #000 !important;
+    background: #fff !important;
+    font-size: 9pt;
+    padding: 1pt 6pt;
+  }
+
+  /* ---------- Zeilen zum Ankreuzen (Status-Historie) ---------- */
+
+  .print-checklines { display: block !important; margin: 8pt 0; }
+  .print-checklines .checkline {
+    display: flex;
+    align-items: center;
+    gap: 6pt;
+    margin: 2.5pt 0;
+    font-size: 9.5pt;
+    color: #000;
+  }
+  .checkline .checkbox {
+    width: 9pt;
+    height: 9pt;
+    border: 0.75pt solid #000;
+    display: inline-block;
+  }
+  .checkline .done { text-decoration: line-through; }
+  .checkline .ts { color: #444; font-size: 8.5pt; margin-left: auto; }
+
+  /* ---------- Notizlinien ---------- */
+
+  .print-notes { display: block !important; margin-top: 10pt; }
+  .print-notes .notes-title { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
+  .print-notes .note-line {
+    border-bottom: 0.5pt solid #999;
+    height: 16pt;
+  }
+
+  /* ---------- Waiver / Signatur ---------- */
+
+  .waiver-box { border: 0.5pt solid #666; padding: 5pt; margin-top: 8pt; }
+  .waiver-box-body { display: block !important; }
+  .signature-img {
+    max-width: 45mm;
+    max-height: 18mm;
+    border: 0.5pt solid #999;
+  }
+  .print-waiver-meta { display: block !important; font-size: 9pt; color: #000; }
+
+  /* ---------- VDE-Prüfprotokoll ---------- */
+
+  .print-equipment { display: block !important; margin-top: 8pt; }
+  .print-equipment .notes-title { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
+  .print-equipment .checkline {
+    display: flex;
+    align-items: center;
+    gap: 6pt;
+    margin: 2.5pt 0;
+    font-size: 9.5pt;
+    color: #000;
+  }
+  .print-equipment .checkline .checkbox {
+    width: 9pt;
+    height: 9pt;
+    border: 0.75pt solid #000;
+    display: inline-block;
+  }
+
+  /* ---------- Ticket-URL als Text ---------- */
+
+  .print-url { display: block !important; margin-top: 8pt; font-size: 8pt; color: #333; word-break: break-all; }
+
+  /* ---------- Separates VDE-Messprotokoll (nur im Protokoll-Druck sichtbar) ---------- */
+
+  .print-protocol-page { display: none !important; } /* normaler Laufzettel-Druck: weg */
+
+  body.printing-protocol .ticket-view { display: none !important; }
+  body.printing-protocol .print-protocol-page { display: block !important; }
+  body.printing-protocol .protocol-page { font-size: 10.5pt; color: #000; }
+  body.printing-protocol .protocol-title {
+    font-size: 13.5pt;
+    margin: 0 0 8pt;
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 4pt;
+  }
+  body.printing-protocol .protocol-head-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4pt 10mm;
+    margin-bottom: 10pt;
+  }
+  body.printing-protocol .pm-label {
+    font-weight: 700;
+    display: inline-block;
+    min-width: 26mm;
+  }
+  body.printing-protocol .protocol-grid,
+  body.printing-protocol .protocol-row {
+    display: grid;
+    grid-template-columns: 1fr 34mm 30mm 16mm;
+    gap: 4pt;
+    align-items: end;
+  }
+  body.printing-protocol .protocol-header-row {
+    font-weight: 700;
+    border-top: 1pt solid #000;
+    border-bottom: 1pt solid #000;
+    padding: 3pt 0;
+  }
+  body.printing-protocol .protocol-row {
+    border-bottom: 0.5pt dotted #999;
+    padding: 5pt 0;
+    break-inside: avoid;
+  }
+  body.printing-protocol .pr-value {
+    min-height: 14pt;
+    border-bottom: 0.75pt solid #666;
+  }
+  body.printing-protocol .pr-verdict { text-align: center; }
+  body.printing-protocol .protocol-verdict {
+    margin-top: 12pt;
+    border: 1.25pt solid #000;
+    padding: 7pt;
+    display: flex;
+    gap: 6mm;
+    align-items: center;
+    font-weight: 700;
+  }
+  body.printing-protocol .pv-box { padding: 3pt 8pt; }
+  body.printing-protocol .pv-nicht_bestanden { border: 1.5pt solid #000; }
+  body.printing-protocol .protocol-notes { margin-top: 8pt; min-height: 18pt; }
+  body.printing-protocol .protocol-signs {
+    display: flex;
+    gap: 16mm;
+    margin-top: 16pt;
+  }
+  body.printing-protocol .protocol-sign { width: 60mm; }
+  body.printing-protocol .sign-line {
+    border-bottom: 0.75pt solid #000;
+    height: 12mm;
+    margin-bottom: 3pt;
+  }
+  body.printing-protocol .protocol-footnote {
+    margin-top: 12pt;
+    font-size: 8pt;
+    color: #333;
+    word-break: break-all;
+  }
+
+  /* Tagebuch im Druck kompakt (Verlauf als Kreuzchen-Historie nutzbar) */
+  .journal { display: block !important; }
+  .journal-entry {
+    border: none;
+    border-bottom: 0.5pt dotted #999;
+    padding: 2pt 0;
+    background: #fff;
+    break-inside: avoid;
+  }
+  .journal-head { font-size: 8.5pt; }
+  .journal-content { font-size: 9.5pt; }
+}
+
+/* ---------- Unsichtbare Druck-Anhänge auf dem Screen ---------- */
+
+.print-checklines,
+.print-notes,
+.print-url,
+.print-equipment,
+.print-protocol-page,
+.print-waiver-meta {
+  display: none; /* Screen: unsichtbar */
+}
+
+/* Der Druck-Button selbst wird im Druck ausgeblendet (button-Regel oben). */
+.print-only-hint { display: none; }
+@media print {
+  .print-only-hint { display: block; font-size: 8pt; color: #666; }
+}

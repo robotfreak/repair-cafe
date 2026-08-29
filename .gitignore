@@ -1,0 +1,12 @@
+# Laufzeitdaten: personenbezogen (Namen, Unterschriften, Eigentümer) — NIEMALS committen!
+data/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Editor/OS
+*.swp
+.DS_Store
