@@ -1,9 +1,9 @@
 /* Repair-Café-Assistent – Druck-Stylesheet für Laufzettel (Task 11)
    Wird in index.html zusammen mit style.css geladen; greift nur bei @media print.
-   Ziel: sauberer A5-quer-Laufzettel zum Anhängen ans Gerät. */
+   Ziel: sauberer A5-hoch-Laufzettel zum Anhängen ans Gerät. */
 
 @page {
-  size: A5 landscape;
+  size: A5 portrait;
   margin: 1cm;
 }
 

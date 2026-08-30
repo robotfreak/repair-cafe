@@ -35,7 +35,7 @@ cd ~/repair-cafe
 | **Dokumente** | PDF/Foto-Upload (max 20 MB) mit automatischer PDF-Textextraktion (pypdf); oder nur URL hinterlegen und serverseitig herunterladen. Identische Datei wird am selben Laufzettel/Gerät abgelehnt (409); jedes Dokument ist löschbar (DB + Datei). |
 | **KI-Assistent** | Pro Ticket ein Chat: sammelt automatisch Gerät, Fehler, Tagebuch, Treffer aus früheren Reparaturen und Manual-Ausschnitte als Kontext und antwortet strukturiert (Ursachen → Prüfschritte → Ersatzteile → Sicherheit). Läuft 100% lokal. |
 | **VDE/DGUV-Prüfung (optional)** | Geräte tragen eine Schutzklasse (SK I/II/III, optional Heizleistung kW). Am Laufzettel erscheint je Schutzklasse eine Checkliste nach **DIN VDE 0701-0702** mit Grenzwerten (Schutzleiter ≤ 0,3 Ω, Isolation ≥ 1/2/0,25 MΩ, Heizgeräte-Regeln 1 mA/kW max. 10 mA, Berührungsstrom ≤ 0,5 mA); Messwerte werden serverseitig bewertet (bestanden/nicht bestanden) und als Prüfprotokoll mitgedruckt. **Die Prüfung ist freiwillig** — keine Pflicht für die Rückgabe; Messmittel sind derzeit nicht vorhanden. |
-| **Druckansicht** | Ticket-Ansicht → **Laufzettel** (A5-quer) mit Ankreuzfeldern + kompaktem VDE-Prüfblock, oder **separates VDE-Messprotokoll** (A4-hoch: Kopfdaten, Messgrößen-/Grenzwert-Tabelle, Gesamturteil, Unterschriftszeilen). Ohne gespeicherte Prüfung wird das Protokoll als **Blanko-Formular** zum handschriftlichen Ausfüllen gedruckt. |
+| **Druckansicht** | Ticket-Ansicht → **Laufzettel** (A5-hoch) mit Ankreuzfeldern + kompaktem VDE-Prüfblock, oder **separates VDE-Messprotokoll** (A4-hoch: Kopfdaten, Messgrößen-/Grenzwert-Tabelle, Gesamturteil, Unterschriftszeilen). Ohne gespeicherte Prüfung wird das Protokoll als **Blanko-Formular** zum handschriftlichen Ausfüllen gedruckt. |
 
 ## Architektur
 

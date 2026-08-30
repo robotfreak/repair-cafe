@@ -964,7 +964,7 @@ async function renderTicket(id) {
         el('div', { class: 'chat-input-row' }, chatInput, chatBtn),
         el('button', {
           type: 'button', class: 'btn btn-wide',
-          onclick: () => printWithPage('A5 landscape', null, null),
+          onclick: () => printWithPage('A5 portrait', null, null),
         }, '🖨 Laufzettel drucken'),
         el('button', {
           type: 'button', class: 'btn btn-wide',
