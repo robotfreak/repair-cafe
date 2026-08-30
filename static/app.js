@@ -556,7 +556,7 @@ async function renderTicket(id) {
     const wrap = el('section', { class: 'equipment-section' });
     if (!ticket.schutzklasse || !checksData || !checksData.checks) {
       wrap.append(el('details', { class: 'equipment-details' },
-        el('summary', {}, '⚡ VDE-Prüfung (DGUV V3)',
+        el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · optional)',
           el('span', { class: 'badge test-verdict' }, 'offen')),
         el('p', { class: 'muted' },
           'Für dieses Gerät ist keine Schutzklasse hinterlegt. Bitte im Geräte-Tab setzen '
@@ -638,7 +638,7 @@ async function renderTicket(id) {
       el('div', { class: 'equipment-meta' }, tester, notes, saveBtn),
       info, errBoxEq);
     wrap.append(el('details', { class: 'equipment-details', open: !savedTest },
-      el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · SK ' + checksData.protection_class + ') ', summaryBadge),
+      el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · optional · SK ' + checksData.protection_class + ') ', summaryBadge),
       inner()));
     return wrap;
   }
@@ -750,7 +750,7 @@ async function renderTicket(id) {
   if (savedTest && savedTest.measurements) {
     printProtocol = el('div', { class: 'print-equipment' },
       el('p', { class: 'notes-title' },
-        '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3) — ',
+        '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3) — optional: ',
         savedTest.verdict === 'bestanden' ? 'BESTANDEN' : 'NICHT BESTANDEN',
         ' · Schutzklasse ' + savedTest.protection_class
         + (savedTest.heating_kw ? ' (' + savedTest.heating_kw + ' kW)' : '')),
@@ -765,7 +765,7 @@ async function renderTicket(id) {
         + (savedTest.notes ? ' · ' + savedTest.notes : '')));
   } else {
     printProtocol = el('div', { class: 'print-equipment' },
-      el('p', { class: 'notes-title' }, '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3):'),
+      el('p', { class: 'notes-title' }, '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3) — optional:'),
       schutzklasseHintLines());
   }
   function schutzklasseHintLines() {
