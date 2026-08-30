@@ -13,6 +13,15 @@ CREATE TABLE IF NOT EXISTS devices (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS test_devices (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  serial_number TEXT,
+  calibration_until TEXT,
+  notes TEXT,
+  archived INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS equipment_tests (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ticket_id INTEGER NOT NULL UNIQUE REFERENCES tickets(id),
@@ -22,6 +31,8 @@ CREATE TABLE IF NOT EXISTS equipment_tests (
   verdict TEXT NOT NULL CHECK(verdict IN ('bestanden','nicht_bestanden')),
   tester TEXT,
   notes TEXT,
+  test_device_id INTEGER REFERENCES test_devices(id),
+  test_device_snapshot TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

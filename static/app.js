@@ -605,11 +605,58 @@ async function renderTicket(id) {
       value: (savedTest && savedTest.tester) || localStorage.getItem('rc_author') || '' });
     const notes = el('input', { type: 'text', maxlength: 1000, placeholder: 'Bemerkung (optional)',
       value: (savedTest && savedTest.notes) || '' });
+
+    /* --- Prüfgerät (Messmittel): Dropdown aus DB + ＋-Neu + Freitext --- */
+    const tdSel = el('select', { 'aria-label': 'Messgerät wählen' },
+      el('option', { value: '' }, 'Messgerät – bitte wählen …'));
+    let savedTdId = null;
+    if (savedTest && savedTest.test_device_id) savedTdId = savedTest.test_device_id;
+    api('/api/test-devices').then((td) => {
+      for (const d of td.test_devices) {
+        const label = d.name + (d.serial_number ? ' · SN ' + d.serial_number : '')
+          + (d.calibration_until ? ' · kal. bis ' + d.calibration_until : '');
+        const opt = el('option', { value: String(d.id) }, label);
+        tdSel.append(opt);
+        if (savedTdId === d.id) tdSel.value = String(d.id);
+      }
+    }).catch(() => {});
+    const tdNewBtn = el('button', { type: 'button', class: 'btn btn-small', title: 'Messgerät neu anlegen' }, '＋');
+    tdNewBtn.addEventListener('click', () => withBusy(tdNewBtn, async () => {
+      const name = prompt('Name des Messgeräts (z. B. „METRAHIT ENERGY“):');
+      if (name === null) return;
+      if (!name.trim()) { showToast('Name ist erforderlich'); return; }
+      const serial = prompt('Seriennummer (optional, leer lassen = überspringen):');
+      if (serial === null) serial = '';
+      const cal = prompt('Kalibriert bis (optional, JJJJ-MM-TT):');
+      if (cal === null) cal = '';
+      const created = await api('/api/test-devices', {
+        method: 'POST',
+        body: { name: name.trim(), serial_number: serial.trim() || null,
+                calibration_until: cal.trim() || null },
+      });
+      const label = created.name + (created.serial_number ? ' · SN ' + created.serial_number : '')
+        + (created.calibration_until ? ' · kal. bis ' + created.calibration_until : '');
+      tdSel.append(el('option', { value: String(created.id) }, label));
+      tdSel.value = String(created.id);
+      showToast('Messgerät angelegt: ' + created.name);
+    }));
+    const tdFree = el('input', { type: 'text', maxlength: 300,
+      placeholder: 'oder freier Text (überschreibt Auswahl)',
+      title: 'Freitext für Protokollzeile, z. B. „Benning DIN 70542 (Nr. 123)“' });
+    tdFree.value = '';
+
     const saveBtn = el('button', { type: 'button', class: 'btn btn-primary' },
       savedTest ? 'Prüfung aktualisieren' : 'Prüfung speichern');
     const info = el('p', { class: 'muted' });
-    if (savedTest) info.textContent = 'Gespeichert: ' + fmtDateTime(savedTest.created_at)
-      + (savedTest.tester ? ' · Prüfer: ' + savedTest.tester : '');
+    if (savedTest) {
+      let tdInfo = '';
+      if (savedTest.test_device_snapshot) {
+        try { tdInfo = ' · Messgerät: ' + (JSON.parse(savedTest.test_device_snapshot).name || ''); }
+        catch (e) { tdInfo = ''; }
+      }
+      info.textContent = 'Gespeichert: ' + fmtDateTime(savedTest.created_at)
+        + (savedTest.tester ? ' · Prüfer: ' + savedTest.tester : '') + tdInfo;
+    }
 
     const errBoxEq = fieldErrorBox();
     saveBtn.addEventListener('click', () => withBusy(saveBtn, async () => {
@@ -619,10 +666,15 @@ async function renderTicket(id) {
       for (const { check, input } of inputs) {
         if (input.value !== '') payloadMeasurements[check.label] = input.value;
       }
+      // Prüfgerät: Freitext hat Vorrang, sonst gewählte ID (Snapshot baut das Backend)
+      let testDevicePayload = null;
+      if (tdFree.value.trim()) testDevicePayload = tdFree.value.trim();
+      else if (tdSel.value) testDevicePayload = { id: Number(tdSel.value) };
       const res = await api('/api/tickets/' + id + '/equipment-test', {
         method: 'POST',
         body: { measurements: payloadMeasurements, tester: tester.value.trim(),
-          notes: notes.value.trim() || null },
+          notes: notes.value.trim() || null,
+          test_device: testDevicePayload },
       });
       savedTest = res;
       showToast('Prüfung gespeichert: ' + (res.verdict === 'bestanden' ? 'BESTANDEN ✓' : 'NICHT bestanden'));
@@ -635,7 +687,9 @@ async function renderTicket(id) {
         + (checksData.heating_kw ? ' · Heizelement ' + checksData.heating_kw + ' kW' : '')
         + ' · Prüfgrundsatz DIN VDE 0701-0702 / DGUV V3'),
       table,
-      el('div', { class: 'equipment-meta' }, tester, notes, saveBtn),
+      el('div', { class: 'equipment-meta' }, tester, notes,
+        el('div', { class: 'form-row td-row' }, tdSel, tdNewBtn), tdFree),
+      saveBtn,
       info, errBoxEq);
     wrap.append(el('details', { class: 'equipment-details', open: !savedTest },
       el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · optional · SK ' + checksData.protection_class + ') ', summaryBadge),
@@ -753,6 +807,17 @@ async function renderTicket(id) {
 
   /* --- VDE-Prüfprotokoll im Druck (aus gespeicherter Prüfung) --- */
   let printProtocol;
+  /* Prüfgerät-Zeile (Name · SN · kal. bis) aus dem Snapshot */
+  const tdLine = (prefix) => {
+    if (!savedTest || !savedTest.test_device_snapshot) return '';
+    try {
+      const td = JSON.parse(savedTest.test_device_snapshot);
+      const parts = [td.name];
+      if (td.serial_number) parts.push('SN ' + td.serial_number);
+      if (td.calibration_until) parts.push('kal. bis ' + td.calibration_until);
+      return (prefix || 'Messgerät: ') + parts.filter(Boolean).join(' · ');
+    } catch (e) { return ''; }
+  };
   if (savedTest && savedTest.measurements) {
     printProtocol = el('div', { class: 'print-equipment' },
       el('p', { class: 'notes-title' },
@@ -768,6 +833,7 @@ async function renderTicket(id) {
       el('p', { class: 'print-waiver-meta' },
         'Prüfer: ' + (savedTest.tester || '—')
         + ' · Geprüft: ' + fmtDateTime(savedTest.created_at)
+        + (tdLine() ? ' · ' + tdLine() : '')
         + (savedTest.notes ? ' · ' + savedTest.notes : '')));
   } else {
     printProtocol = el('div', { class: 'print-equipment' },
@@ -839,7 +905,8 @@ async function renderTicket(id) {
           metaFill('Laufzettel', '#' + ticket.id + ' · ' + ticket.fault_description),
           metaFill('Schutzklasse', sk ? 'SK ' + sk + (heating ? ' · ' + heating + ' kW' : '') : '—'),
           metaFill('Prüfdatum', hasSaved ? fmtDateTime(savedTest.created_at) : ''),
-          metaFill('Prüfer', hasSaved ? (savedTest.tester || '') : '')),
+          metaFill('Prüfer', hasSaved ? (savedTest.tester || '') : ''),
+          metaFill('Messgerät', tdLine('').replace(/^ /, '') || '')),
         el('div', { class: 'protocol-grid protocol-header-row' },
           el('span', { class: 'pr-name' }, 'Messgröße'),
           el('span', { class: 'pr-limit' }, 'Grenzwert'),

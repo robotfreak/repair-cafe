@@ -36,6 +36,14 @@ def _migrate(db, path):
     if "content_hash" not in doc_cols:
         db.execute("ALTER TABLE documents ADD COLUMN content_hash TEXT")
 
+    eq_cols = {r[1] for r in db.execute("PRAGMA table_info(equipment_tests)")}
+    if eq_cols:  # Tabelle existiert in Bestands-DBs bereits (ohne neue Spalten)
+        if "test_device_id" not in eq_cols:
+            db.execute("ALTER TABLE equipment_tests ADD COLUMN"
+                       " test_device_id INTEGER REFERENCES test_devices(id)")
+        if "test_device_snapshot" not in eq_cols:
+            db.execute("ALTER TABLE equipment_tests ADD COLUMN test_device_snapshot TEXT")
+
     # Einmaliger Backfill: SHA-256 für bereits gespeicherte Dateien nachtragen
     data_dir = os.path.dirname(os.path.abspath(path))
     stale = db.execute(

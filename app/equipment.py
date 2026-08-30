@@ -32,6 +32,68 @@ def all_checks():
     return {cls: checks_for(cls) for cls in PROTECTION_CLASSES}
 
 
+# ---------- Prüfgeräte (Messmittel) ----------
+
+NAME_MAX = 200
+SERIAL_MAX = 100
+CAL_MAX = 20      # z. B. '2027-05-31'
+TD_NOTES_MAX = 500
+
+
+@bp.route("/api/test-devices", methods=["GET"])
+def list_test_devices():
+    conn = get_request_db(flask.current_app)
+    rows = conn.execute(
+        "SELECT id, name, serial_number, calibration_until, notes, archived"
+        " FROM test_devices WHERE archived = 0 ORDER BY name"
+    ).fetchall()
+    return {"test_devices": [dict(r) for r in rows]}
+
+
+@bp.route("/api/test-devices", methods=["POST"])
+def create_test_device():
+    conn = get_request_db(flask.current_app)
+    payload = flask.request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return {"error": "JSON-Body erforderlich"}, 400
+    name = payload.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return {"error": "Name ist erforderlich"}, 400
+    name = name.strip()
+    if len(name) > NAME_MAX:
+        return {"error": f"Name darf höchstens {NAME_MAX} Zeichen lang sein"}, 400
+
+    serial = payload.get("serial_number")
+    if serial is not None and not isinstance(serial, str):
+        return {"error": "serial_number muss ein Textfeld sein"}, 400
+    serial = (serial or "").strip() or None
+    if serial and len(serial) > SERIAL_MAX:
+        return {"error": f"serial_number darf höchstens {SERIAL_MAX} Zeichen lang sein"}, 400
+
+    cal = payload.get("calibration_until")
+    if cal is not None and not isinstance(cal, str):
+        return {"error": "calibration_until muss ein Textfeld (Datum) sein"}, 400
+    cal = (cal or "").strip() or None
+    if cal and len(cal) > CAL_MAX:
+        return {"error": f"calibration_until darf höchstens {CAL_MAX} Zeichen lang sein"}, 400
+
+    notes = payload.get("notes")
+    if notes is not None and not isinstance(notes, str):
+        return {"error": "notes muss ein Textfeld sein"}, 400
+    notes = (notes or "").strip() or None
+    if notes and len(notes) > TD_NOTES_MAX:
+        return {"error": f"notes darf höchstens {TD_NOTES_MAX} Zeichen lang sein"}, 400
+
+    cur = conn.execute(
+        "INSERT INTO test_devices (name, serial_number, calibration_until, notes)"
+        " VALUES (?, ?, ?, ?)",
+        (name, serial, cal, notes),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM test_devices WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return dict(row), 201
+
+
 @bp.route("/api/tickets/<int:ticket_id>/equipment-test/checks", methods=["GET"])
 def checks_for_ticket(ticket_id):
     """Checkliste passend zur Schutzklasse des Geräts am Laufzettel."""
@@ -89,6 +151,46 @@ def save_test(ticket_id):
         if notes and len(notes) > NOTES_MAX:
             return {"error": f"notes darf höchstens {NOTES_MAX} Zeichen lang sein"}, 400
 
+    # Prüfgerät: entweder vorhandene ID oder Snapshot-Text (freies Feld).
+    test_device = payload.get("test_device")
+    test_device_id = None
+    test_device_snapshot = None
+    if test_device is not None:
+        if isinstance(test_device, dict):
+            td = test_device
+            td_id = td.get("id")
+            td_row = None
+            if td_id is not None:
+                if not isinstance(td_id, int):
+                    return {"error": "test_device.id muss eine Zahl sein"}, 400
+                td_row = conn.execute(
+                    "SELECT * FROM test_devices WHERE id = ? AND archived = 0", (td_id,)
+                ).fetchone()
+                if td_row is None:
+                    return {"error": "Prüfgerät nicht gefunden"}, 404
+                test_device_id = td_row["id"]
+            # Snapshot immer aus dem Request übernehmen (UI sendet DB-Stand),
+            # so bleibt die Protokollzeile auch ohne DB-Eintrag möglich.
+            snap_name = td.get("name") or (td_row["name"] if td_row else None)
+            if not isinstance(snap_name, str) or not snap_name.strip():
+                return {"error": "test_device.name ist erforderlich (Messgerät)"}, 400
+            snap_serial = td.get("serial_number") or (td_row["serial_number"] if td_row else None)
+            snap_cal = td.get("calibration_until") or (td_row["calibration_until"] if td_row else None)
+            test_device_snapshot = json.dumps({
+                "name": snap_name.strip(),
+                "serial_number": (snap_serial or "").strip() or None,
+                "calibration_until": (snap_cal or "").strip() or None,
+            }, ensure_ascii=False)
+        elif isinstance(test_device, str):
+            if not test_device.strip():
+                return {"error": "test_device darf nicht leer sein"}, 400
+            if len(test_device) > 300:
+                return {"error": "test_device darf höchstens 300 Zeichen lang sein"}, 400
+            test_device_snapshot = json.dumps({"name": test_device.strip()}, ensure_ascii=False)
+            test_device_id = None
+        else:
+            return {"error": "test_device muss ein Objekt oder Text sein"}, 400
+
     checks = checks_for(device["schutzklasse"], device["heating_kw"])
     measurements = {}
     problems = []
@@ -118,16 +220,19 @@ def save_test(ticket_id):
     verdict = "bestanden" if all_ok else "nicht_bestanden"
     conn.execute(
         "INSERT INTO equipment_tests (ticket_id, protection_class, heating_kw,"
-        " measurements, verdict, tester, notes)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?)"
+        " measurements, verdict, tester, notes, test_device_id, test_device_snapshot)"
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
         " ON CONFLICT(ticket_id) DO UPDATE SET"
         " protection_class=excluded.protection_class,"
         " heating_kw=excluded.heating_kw,"
         " measurements=excluded.measurements,"
         " verdict=excluded.verdict, tester=excluded.tester, notes=excluded.notes,"
+        " test_device_id=excluded.test_device_id,"
+        " test_device_snapshot=excluded.test_device_snapshot,"
         " created_at=datetime('now')",
         (ticket_id, device["schutzklasse"], device["heating_kw"],
-         json.dumps(measurements, ensure_ascii=False), verdict, tester, notes),
+         json.dumps(measurements, ensure_ascii=False), verdict, tester, notes,
+         test_device_id, test_device_snapshot),
     )
     conn.commit()
 
