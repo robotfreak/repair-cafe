@@ -32,6 +32,7 @@
   .equipment-section,
   .sk-editor,
   .doc-actions,
+  .brand-logo,
   .form,
   button,
   input,
@@ -45,6 +46,13 @@
     color: #000;
     font-size: 10.5pt;
     line-height: 1.35;
+  }
+
+  .print-logo {
+    display: block !important;
+    height: 12mm;
+    width: auto;
+    margin-bottom: 4mm;
   }
 
   .view { padding: 0; max-width: none; }
@@ -233,6 +241,7 @@
 .print-url,
 .print-equipment,
 .print-protocol-page,
+.print-logo,
 .print-waiver-meta {
   display: none; /* Screen: unsichtbar */
 }

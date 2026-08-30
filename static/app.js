@@ -744,6 +744,12 @@ async function renderTicket(id) {
     ...Array.from({ length: 10 }, () => el('div', { class: 'note-line' })));
   const printUrl = el('div', { class: 'print-url' },
     'Laufzettel im Netz: http://' + location.host + '/#/ticket/' + ticket.id);
+  const printLogo = el('img', {
+    class: 'print-logo',
+    src: '/static/logo_bw.png',
+    alt: 'berlin Creators',
+  });
+  printLogo.addEventListener('error', () => printLogo.remove());
 
   /* --- VDE-Prüfprotokoll im Druck (aus gespeicherter Prüfung) --- */
   let printProtocol;
@@ -936,6 +942,7 @@ async function renderTicket(id) {
         statusActions,
         waiverBox,
         equipmentSection,
+        printLogo,
         printChecklines,
         printNotes,
         printUrl,

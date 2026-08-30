@@ -77,6 +77,15 @@ a { color: var(--accent); }
   z-index: 20;
 }
 
+.brand-logo {
+  height: 42px;
+  width: auto;
+  margin-right: 0.5rem;
+  background: #1f2430;           /* dunkler Chip: weiße Schrift bleibt lesbar */
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
 .brand {
   font-weight: 700;
   margin-right: 0.75rem;
