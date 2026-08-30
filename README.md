@@ -94,7 +94,7 @@ Unterschriften ohne passende DB-Einträge (und umgekehrt) sind wertlos.
 
 ## Wichtige Hinweise
 
-1. **Haftungsausschluss-Text** (`app/waiver_text.py`, Version `2026-08-28`) ist eine gängige Standard-Vorlage — **vor dem ersten echten Café-Termin juristisch gegenprüfen** (Vereinsrecht/Versicherung). Version anpassen = eine Zeile; alte Waiver bleiben mit ihrer Version dokumentiert.
+1. **Haftungs­vereinbarung** (`app/waiver_text.py`, Version `2026-08-30`): überarbeitete „Reparatur- und Haftungsvereinbarung" (Internetvorlage, verschmolzen mit den bisherigen Punkten) — **vor dem ersten echten Café-Termin juristisch gegenprüfen** (Vereinsrecht/Versicherung). Version anpassen = eine Zeile; alte Waiver bleiben mit ihrer Version dokumentiert.
 2. **DSGVO:** Namen + Unterschriften sind personenbezogene Daten; sie liegen ausschließlich lokal (DB + `data/signatures/`). Backups ebenfalls nur lokal (`~/repair-backups/`). Im UI nur Vornamen/Pseudonyme erfassen.
 3. **Demo-Daten:** Bereinigt am 29.08.2026 — die Abnahme-Test-Daten (Föhn, Toaster, Smoke-Test-Bohrer) wurden gelöscht; verbleibend ist nur das echte Gerät **Hameg HM705** (Ticket 3, Tagebuch + Handbücher + Unterschrift). Soll die DB vor dem ersten Café-Termin komplett leer starten: `systemctl stop repair-cafe && rm data/repair.db* data/signatures/* && sudo systemctl start repair-cafe`.
 4. **Server:** gunicorn (2 Worker × 4 Threads, Timeout 300 s) statt Flask-Devserver; Unit in `scripts/repair-cafe.service`. Lange Assistent-Antworten blockieren das UI nicht.
