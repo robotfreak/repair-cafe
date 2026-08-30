@@ -144,7 +144,7 @@ def test_post_ticket_valid_creates_waiver_and_signature(app_client, tmp_path):
         conn.close()
     assert row is not None
     assert row[0] == ticket["id"]
-    assert row[1] == "2026-08-28"
+    assert row[1] == "2026-08-30"
     assert row[2] == "Max Mustermann"
     assert row[3] == 1
     sig_rel = row[4]

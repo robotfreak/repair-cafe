@@ -30,7 +30,7 @@ def seed_ticket_with_waiver(tmp_path, signature_path="signatures/test.png"):
         cur = conn.execute(
             "INSERT INTO waivers (ticket_id, waiver_version, signed_name, accepted, signature_path)"
             " VALUES (?, ?, ?, 1, ?)",
-            (ticket_id, "2026-08-28", "Max Mustermann", signature_path),
+            (ticket_id, "2026-08-30", "Max Mustermann", signature_path),
         )
         waiver_id = cur.lastrowid
         conn.commit()
@@ -121,8 +121,8 @@ def test_get_waiver_text(app_client):
     resp = app_client.get("/api/waiver")
     assert resp.status_code == 200
     data = resp.get_json()
-    assert data["version"] == "2026-08-28"
-    assert "Haftungsausschluss – Repair-Café" in data["text"]
+    assert data["version"] == "2026-08-30"
+    assert "Reparatur- und Haftungsvereinbarung – Repair-Café" in data["text"]
 
 
 def test_ticket_waiver_404_without_waiver(app_client):
@@ -142,7 +142,7 @@ def test_ticket_waiver_200_with_metadata(app_client, tmp_path):
     assert resp.status_code == 200
     data = resp.get_json()
     assert data["signed_name"] == "Max Mustermann"
-    assert data["waiver_version"] == "2026-08-28"
+    assert data["waiver_version"] == "2026-08-30"
     assert data["signed_at"]
     assert data["signature_url"] == f"/api/waivers/{waiver_id}/signature"
 

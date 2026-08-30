@@ -1,20 +1,40 @@
-"""Statischer Haftungsausschluss-Text mit Versionsnummer."""
+"""Statischer Haftungsausschluss-Text mit Versionsnummer.
 
-WAIVER_VERSION = "2026-08-28"
+Version 2026-08-30: Überarbeiteter Text (Reparatur- und Haftungsvereinbarung)
+auf Basis einer Internetvorlage — Klartext-Klauseln zu Fahrlässigkeit,
+Personenschäden und Entsorgung. Die bisherigen Punkte (Datensicherung,
+8-Wochen-Regel, Eigentümer-Bestätigung) bleiben erhalten.
+"""
 
-WAIVER_TEXT = """Haftungsausschluss – Repair-Café
+WAIVER_VERSION = "2026-08-30"
 
-Die Reparatur erfolgt kostenlos durch ehrenamtliche Helfer:innen. Es wird keine
-Gewährleistung für die Reparatur übernommen. Haftungsansprüche gegen das
-Repair-Café bzw. die Helfer:innen — außer bei Vorsatz oder grober Fahrlässigkeit —
-sind ausgeschlossen. Dies gilt insbesondere für:
-- Folgeschäden am Gerät oder anderen Gegenständen;
-- Verlust von Daten (Geräte werden ohne Datensicherung geöffnet);
-- Personen- oder Sachschäden durch nach der Reparatur weiterverwendete Geräte.
+WAIVER_TEXT = """Reparatur- und Haftungsvereinbarung – Repair-Café
 
-Ich bestätige, Eigentümer:in des Geräts zu sein oder die Reparatur mit Zustimmung
-der Eigentümer:in beauftragen zu dürfen.
+1. Hilfe zur Selbsthilfe: Die Reparatur erfolgt gemeinsam und ehrenamtlich als
+   unentgeltliche Nachbarschaftshilfe. Es wird kein kommerzieller Reparatur-
+   oder Werkvertrag geschlossen.
 
-Nicht abgeholte Geräte werden nach 8 Wochen entsorgt oder weiterverwendet.
+2. Keine Garantie: Das Repair Café und die ehrenamtlichen Helfer:innen
+   übernehmen keine Gewährleistung oder Garantie für das Gelingen der
+   Reparatur oder die künftige Funktionsfähigkeit des Gerätes.
 
-Die Reparatur erfolgt auf eigenes Risiko des Gerätebesitzers."""
+3. Haftungsbeschränkung:
+   a) Die Haftung für Sach- und Vermögensschäden, die durch einfache
+      Fahrlässigkeit der Helfer:innen oder des Veranstalters entstehen
+      (einschließlich Folgeschäden oder Beschädigungen beim Öffnen/Reparieren
+      des Gerätes), ist ausgeschlossen. Dies gilt insbesondere auch für den
+      Verlust von Daten — Geräte werden ohne Datensicherung geöffnet.
+   b) Unberührt hiervon bleibt die gesetzliche Haftung für Schäden aus der
+      Verletzung des Lebens, des Körpers oder der Gesundheit sowie für
+      Schäden, die auf einer vorsätzlichen oder grob fahrlässigen
+      Pflichtverletzung beruhen.
+
+4. Mitnahme & Entsorgung: Nicht mehr reparierbare Geräte und ausgetauschte
+   Altteile werden vom Besucher wieder mitgenommen und eigenverantwortlich
+   fachgerecht entsorgt.
+
+5. Nicht abgeholte Geräte werden nach 8 Wochen entsorgt oder weiterverwendet.
+
+Ich bestätige, Eigentümer:in des Geräts zu sein oder die Reparatur mit
+Zustimmung der Eigentümer:in beauftragen zu dürfen. Die Reparatur erfolgt auf
+eigenes Risiko des Gerätebesitzers."""
