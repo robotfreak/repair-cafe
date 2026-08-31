@@ -145,7 +145,7 @@ def test_chat_success(app_client, ticket_id):
     assert messages[0] == {"role": "system", "content": SYSTEM_PROMPT}
     assert messages[1]["role"] == "user"
     # user-Content enthält fault_description und die Frage
-    assert "FEHLER: Netzteil tot" in messages[1]["content"]
+    assert "URSPRÜNGLICHER FEHLER (bei Annahme): Netzteil tot" in messages[1]["content"]
     assert "FRAGE DES NUTZERS: Wo fange ich an?" in messages[1]["content"]
 
 

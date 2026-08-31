@@ -104,7 +104,7 @@ def test_build_context_full_structure(tmp_db):
     assert lines[0] == (
         "GERÄT: Netzteil Voltcraft (Netzteil), Hersteller Voltcraft, Modell PS-123"
     )
-    assert lines[1] == "FEHLER: Netzteil tot"
+    assert lines[1] == "URSPRÜNGLICHER FEHLER (bei Annahme): Netzteil tot"
     assert lines[2] == "STATUS: in_arbeit"
     assert lines[3] == "SCHON ERLEDIGT (nicht wieder vorschlagen):"
     assert lines[-1] == "FRAGE DES NUTZERS: Was tun?"
@@ -269,7 +269,7 @@ def test_build_context_respects_max_chars(tmp_db):
     assert len(ctx) <= 300
     # Kopf bleibt vollständig
     assert ctx.startswith("GERÄT: Netzteil Voltcraft (Netzteil), Hersteller Voltcraft, Modell PS-123\n")
-    assert "FEHLER: Netzteil tot" in ctx
+    assert "URSPRÜNGLICHER FEHLER (bei Annahme): Netzteil tot" in ctx
     assert "STATUS: in_arbeit" in ctx
     # Frage-Zeile bleibt vollständig
     assert ctx.endswith("FRAGE DES NUTZERS: Was tun?")

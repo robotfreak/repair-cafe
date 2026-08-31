@@ -69,7 +69,7 @@ def build_context(conn, ticket_id, question, max_chars=6000):
     head = [
         f"GERÄT: {row['device_name']} ({row['category'] or '—'}),"
         f" Hersteller {row['manufacturer'] or '—'}, Modell {row['model'] or '—'}",
-        f"FEHLER: {row['fault_description']}",
+        f"URSPRÜNGLICHER FEHLER (bei Annahme): {row['fault_description']}",
         f"STATUS: {row['status']}",
     ]
 
