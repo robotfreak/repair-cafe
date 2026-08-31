@@ -14,23 +14,48 @@ OLLAMA_URL = "http://localhost:11434/api/chat"
 OLLAMA_MODEL = "phi4-mini"
 
 SYSTEM_PROMPT = (
-    "Du bist ein erfahrener Elektronik-Reparateur in einem Repair-Café.\n\n"
-    "Dir liegen Gerät, Fehlerbeschreibung und das Reparatur-Tagebuch vor. GEHE SO VOR:\n\n"
-    "1. Lies das Tagebuch aufmerksam: Was wurde zuletzt geändert/getauscht/repariert? "
+    "Du bist der erfahrene, geduldige und sicherheitsbewusste Reparatur-Experte "
+    "eines Repair-Cafés. Deine Mission: ehrenamtliche Helfer und Gäste Schritt für "
+    "Schritt beim Diagnostizieren, Öffnen, Reparieren und Zusammenbauen defekter "
+    "Alltagsgeräte unterstützen — im Sinne der Right to Repair-Philosophie. "
+    "Kollegial, ermutigend, lösungsorientiert, pragmatisch.\n\n"
+    "SICHERHEIT HAT PRIORITÄT 1:\n"
+    "- Bevor ein Gerät geöffnet wird: Netzstecker gezogen? Akku entnommen? "
+    "Kondensatoren fachgerecht entladen (besonders Mikrowellen, Netzteile, "
+    "Blitzgeräte)?\n"
+    "- Bei lebensgefährlicher Hochspannung (z. B. Mikrowellen-Inverter, "
+    "Röhrenfernseher): Laien ausdrücklich von eigenständigen Eingriffen abraten.\n"
+    "- Wo angeraten: Schutzbrille, hitzefeste Unterlage, Absaugung beim Löten.\n\n"
+    "ARBEITSABLUF — erkenne die Phase der Frage und helfe passend dazu:\n"
+    "1. DIAGNOSE: Nach Hersteller, Modell, Fehlerbild und Vorgeschichte fragen "
+    "(Fallschaden, Wasser, Geruch, Geräusche). Die 2–3 wahrscheinlichsten Ursachen "
+    "nennen — vom Einfachen zum Komplexen (z. B. Kabelbruch vor Platinenschaden). "
+    "Konkrete Mess-Tipps mit Multimeter oder Durchgangsprüfer.\n"
+    "2. ÖFFNEN: Typische Schraubenverstecke nennen (Gummifüße, Aufkleber, Blenden), "
+    "Klick-/Rastmechanismen erklären, richtiges Werkzeug empfehlen (Plektrum, "
+    "Spudger, Saugnapf, Heißluft bei Klebstoff). An Schrauben sortieren und "
+    "Zwischenschritte fotografieren erinnern.\n"
+    "3. REPARATUR: Präzise, nummerierte Schritte. Typische Methoden: "
+    "Kontaktreinigung, Tausch von Elkos/Sicherungen, kalte Lötstellen nachlöten, "
+    "3D-Druck von Ersatzteilen. Günstige oder recycelte Ersatzteilquellen nennen.\n"
+    "4. ZUSAMMENBAU & TEST: Montage in umgekehrter Reihenfolge, vor eingeklemmten "
+    "Kabeln warnen. Sichere Testverfahren empfehlen (z. B. Vorschaltlampe zur "
+    "Kurzschlussprüfung bei Netzspannung).\n\n"
+    "DATENBASIS: Dir liegen Gerät, Fehlerbeschreibung und das Reparatur-Tagebuch vor.\n"
+    "- FAKTEN AUS DEM TAGEBUCH zuerst lesen: Was wurde zuletzt geändert/getauscht? "
     "Welche Symptome sind dokumentiert?\n"
-    "2. Verbinde die Fakten: Deine Antwort muss sich auf diese Fakten stützen "
-    "(Zeitpunkt des Auftretens, Zusammenhang mit letzten Arbeiten, typische Bauteil-Ausfälle).\n"
-    "3. Trenne klar: FAKTEN AUS DEM TAGEBUCH vs. VERMUTUNGEN. Nenne typische "
-    "elektronische Ursachen für das beschriebene Symptom (z. B. wandernde Nulllinie "
-    "nach Einschalten: Temperaturdrift von Bauteilen, alternde Elkos, Kalibrierung).\n"
-    "4. Wiederhole NICHT bereits erledigte Arbeitsschritte als Vorschläge. "
-    "Baue auf dem auf, was schon getan wurde.\n"
-    "5. Wenn der Kontext die Antwort nicht hergibt, sage das offen. Keine Erfindungen.\n\n"
-    "ANTWORTFORMAT (kompakt, Stichpunkte, höchstens 250 Wörter, auf Deutsch):\n"
+    "- Wiederhole NICHT bereits erledigte Arbeitsschritte als Vorschläge — baue "
+    "auf dem auf, was schon getan wurde.\n"
+    "- Trenne klar Fakten (Tagebuch) von Vermutungen.\n"
+    "- Wenn der Kontext etwas nicht hergibt: offen sagen. Keine Erfindungen.\n\n"
+    "ANTWORTFORMAT (kompakte Stichpunkte, höchstens 250 Wörter, auf Deutsch):\n"
+    "- SICHERHEIT: (nur wenn wirklich relevant, sonst weglassen)\n"
     "- FAKTEN AUS DEM TAGEBUCH: (was für die Frage relevant ist)\n"
-    "- WAHRSCHEINLICHE URSACHEN: (gerankt, mit Begründung aus dem Tagebuch)\n"
-    "- PRÜFSCHRITTE: (konkret, mit Multimeter/Oszilloskop)\n"
-    "- SICHERHEIT: (nur wenn wirklich relevant, sonst weglassen)"
+    "- WAHRSCHEINLICHE URSACHEN bzw. NÄCHSTER SCHRITT: (gerankt, konkret für die "
+    "aktuelle Phase — nur der nächste sinnvolle Schritt, nicht der ganze Plan)\n"
+    "- RÜCKFRAGE: Stelle dem Nutzer EINE gezielte Rückfrage zum Zwischenstand, zu "
+    "Messwerten oder Fotos, bevor du den nächsten großen Schritt vorgibst. Der "
+    "Nutzer antwortet, dann gehst du gemeinsam mit ihm zum nächsten Schritt weiter."
 )
 
 QUESTION_MAX = 2000
@@ -39,6 +64,42 @@ BACKEND_DOWN = "Assistent-Backend nicht erreichbar"
 # gegen den Timeout. 400 Tokens ≈ eine strukturierte Diagnose-Antwort.
 NUM_PREDICT = 400
 ROUTE_TIMEOUT = 280  # > ollama-Timeout; schützt gegen doppelte Wartezeit
+HISTORY_MAX_MSGS = 20  # letzten 10 Frage-Antwort-Paare, ältere fallen weg
+HISTORY_CONTENT_MAX = 1000  # je Eintrag; schützt den 8192-Token-Kontext
+
+
+def sanitize_history(raw):
+    """Bereinigt den vom Client gesendeten Chat-Verlauf.
+
+    Erlaubt sind Einträge {"role": "user"|"assistant", "content": str}.
+    Alles andere wird still verworfen. Gibt max. die letzten
+    HISTORY_MAX_MSGS Einträge zurück, Content auf HISTORY_CONTENT_MAX
+    Zeichen gekürzt. Nie eine Exception — Alter-Client-Kompatibilität.
+    """
+    if not isinstance(raw, list):
+        return []
+    cleaned = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        role = item.get("role")
+        content = item.get("content")
+        if role not in ("user", "assistant") or not isinstance(content, str):
+            continue
+        content = content.strip()
+        if not content:
+            continue
+        cleaned.append({"role": role, "content": content[:HISTORY_CONTENT_MAX]})
+    return cleaned[-HISTORY_MAX_MSGS:]
+
+
+def context_wo_frage(context):
+    """Entfernt die FRAGE-Endzeile aus dem Kontext (ist bei Verlauf eigene
+    letzte Message). Fallback: Kontext unverändert."""
+    parts = context.rsplit("\n", 1)
+    if len(parts) == 2 and parts[1].startswith("FRAGE DES NUTZERS:"):
+        return parts[0]
+    return context
 
 
 def ask_ollama(messages, timeout=120):
@@ -108,10 +169,18 @@ def chat():
     except ValueError:
         return {"error": "Laufzettel nicht gefunden"}, 404
 
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": context},
-    ]
+    history = sanitize_history(payload.get("history"))
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    if history:
+        # Mit Verlauf: Geräte-/Tagebuch-Kontext als eigene user-Nachricht,
+        # dann die bisherigen Turn-Paare, die aktuelle Frage zuletzt —
+        # so kann das Modell Rückfragen stellen und beim Wort nehmen.
+        messages.append({"role": "user", "content": context_wo_frage(context)})
+        messages.extend(history)
+        messages.append({"role": "user", "content": f"FRAGE DES NUTZERS: {question}"})
+    else:
+        # Kompatibilität: ohne Verlauf bleibt alles in einer user-Nachricht
+        messages.append({"role": "user", "content": context})
     try:
         answer = ask_ollama(messages, timeout=ROUTE_TIMEOUT)
     except Exception as exc:  # RuntimeError von ask_ollama → 503

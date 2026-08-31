@@ -40,15 +40,29 @@ def ticket_id(app_client):
 # ---------- SYSTEM_PROMPT / ask_ollama ----------
 
 def test_system_prompt_key_aspects():
-    """Der Prompt muss das Tagebuch in den Mittelpunkt stellen (Regression:
-    generische Antworten, die Erledigtes wiederholt haben)."""
+    """Der Prompt muss das Gem-Profil abbilden: sicherheitsfirst, phasenbasiert,
+    interaktiv — und das Tagebuch als Faktenbasis (Regression: generische
+    Antworten, die Erledigtes wiederholt haben)."""
+    # Rolle & Philosophie
+    assert "Repair-Café" in SYSTEM_PROMPT
+    assert "Right to Repair" in SYSTEM_PROMPT
+    # Sicherheit hat Priorität 1
+    assert "Netzstecker" in SYSTEM_PROMPT
+    assert "Kondensatoren" in SYSTEM_PROMPT
+    # Phasen des Arbeitsablaufs
+    assert "DIAGNOSE" in SYSTEM_PROMPT
+    assert "ÖFFNEN" in SYSTEM_PROMPT
+    assert "REPARATUR" in SYSTEM_PROMPT
+    assert "ZUSAMMENBAU" in SYSTEM_PROMPT
+    # Tagebuch-Anker (Regression)
     assert "Tagebuch" in SYSTEM_PROMPT
     assert "FAKTEN AUS DEM TAGEBUCH" in SYSTEM_PROMPT
     assert "WAHRSCHEINLICHE URSACHEN" in SYSTEM_PROMPT
-    # Erledigtes nicht erneut vorschlagen
     assert "Wiederhole NICHT" in SYSTEM_PROMPT
-    # Keine Erfindungen
     assert "Keine Erfindungen" in SYSTEM_PROMPT
+    # Interaktivität: nächster Schritt + Rückfrage
+    assert "Rückfrage" in SYSTEM_PROMPT
+    assert "nächsten Schritt" in SYSTEM_PROMPT
 
 
 def test_ask_ollama_sends_correct_payload():
@@ -162,6 +176,68 @@ def test_chat_unknown_ticket_404(app_client):
     assert resp.status_code == 404
     assert resp.get_json() == {"error": "Laufzettel nicht gefunden"}
     mock_ask.assert_not_called()
+
+
+def test_chat_history_sent_to_backend(app_client, ticket_id):
+    """Chat-Verlauf wird als messages mitgeschickt: context+Frage als user,
+    bisherige Antworten als assistant — Grundlage für Rückfragen."""
+    with patch("app.assistant.ask_ollama") as mock_ask:
+        mock_ask.return_value = "Messpunkte A und B durchmessen."
+        resp = app_client.post(
+            "/api/assistant/chat",
+            json={
+                "ticket_id": ticket_id,
+                "question": "Und wo genau messen?",
+                "history": [
+                    {"role": "assistant", "content": "Zuerst Primärseite prüfen."},
+                    {"role": "user", "content": "Okay, Primärseite ist okay."},
+                ],
+            },
+        )
+    assert resp.status_code == 200
+    messages = mock_ask.call_args[0][0]
+    # system → context(user) → assistant → user → Frage
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+    assert messages[2] == {"role": "assistant", "content": "Zuerst Primärseite prüfen."}
+    assert messages[3] == {"role": "user", "content": "Okay, Primärseite ist okay."}
+    assert messages[4]["role"] == "user"
+    assert "FRAGE DES NUTZERS: Und wo genau messen?" in messages[4]["content"]
+
+
+def test_chat_history_empty_or_invalid_tolerant(app_client, ticket_id):
+    """Fehlender/ungültiger Verlauf darf nie brechen (Alte-Clients-Kompatibilität)."""
+    with patch("app.assistant.ask_ollama") as mock_ask:
+        mock_ask.return_value = "ok"
+        for bad in [None, [], "x", [42], [{"role": "user"}], [{"role": "nope", "content": "x"}]]:
+            resp = app_client.post(
+                "/api/assistant/chat",
+                json={"ticket_id": ticket_id, "question": "Was tun?", "history": bad},
+            )
+            assert resp.status_code == 200, f"history={bad!r}"
+            messages = mock_ask.call_args[0][0]
+            # Nur gültige Einträge dürfen übrig bleiben
+            for msg in messages[1:]:
+                assert msg["role"] in {"user", "assistant"}
+                assert isinstance(msg["content"], str) and msg["content"].strip()
+
+
+def test_chat_history_size_capped(app_client, ticket_id):
+    """Der Verlauf darf den Kontext nicht sprengen: letzte N Einträge, Rest verworfen."""
+    with patch("app.assistant.ask_ollama") as mock_ask:
+        mock_ask.return_value = "ok"
+        big_history = [
+            {"role": "user" if i % 2 == 0 else "assistant", "content": f"Nachricht {i}"}
+            for i in range(60)
+        ]
+        resp = app_client.post(
+            "/api/assistant/chat",
+            json={"ticket_id": ticket_id, "question": "Weiter?", "history": big_history},
+        )
+    assert resp.status_code == 200
+    messages = mock_ask.call_args[0][0]
+    history_msgs = messages[2:-1]  # ohne system + Kontext-Nachricht und ohne Frage-Msg
+    assert len(history_msgs) <= 20
 
 
 def test_chat_backend_error_503(app_client, ticket_id):

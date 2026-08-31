@@ -964,25 +964,45 @@ async function renderTicket(id) {
   const chatBtn = el('button', { type: 'button', class: 'btn' }, 'Senden');
   const chatHistory = [];
   function chatBubble(role, text) {
+    const msg = el('div', { class: 'chat-msg chat-' + role }, safeText(text));
     chatHistory.push({ role, text });
-    chatLog.append(el('div', { class: 'chat-msg chat-' + role }, safeText(text)));
+    chatLog.append(msg);
     chatLog.scrollTop = chatLog.scrollHeight;
+    return msg;
   }
   async function sendChat() {
     const question = chatInput.value.trim();
     if (!question) return;
+    // Verlauf VOR dem Einfügen der aktuellen Frage einfrieren: die Frage
+    // geht als `question` mit, ältere Turn-Paare als `history` (Fehler-
+    // Meldungen raus, damit das Modell sie nicht als Antwort liest).
+    const history = chatHistory
+      .filter((m) => m.text !== 'Leere Antwort'
+        && !m.text.startsWith('Assistent ist aktuell nicht verfügbar'))
+      .map((m) => ({ role: m.role, content: m.text }));
     chatBubble('user', question);
     chatInput.value = '';
+    chatBtn.disabled = true;
+    // Transienter Lade-Bubble: nur im DOM, NICHT im chatHistory (sonst
+    // landet der Hinweis beim nächsten Senden als "Antwort" im Verlauf).
+    const pending = el('div', { class: 'chat-msg chat-assistant' },
+      safeText('Assistent denkt nach … (auf dem Pi kann das 1–3 Minuten dauern)'));
+    chatLog.append(pending);
+    chatLog.scrollTop = chatLog.scrollHeight;
     try {
       const data = await api('/api/assistant/chat', {
         method: 'POST',
-        body: { ticket_id: Number(id), question },
+        body: { ticket_id: Number(id), question, history },
       });
       const answer = (data && (data.answer ?? data.reply ?? data.message)) || 'Leere Antwort';
+      pending.remove();
       chatBubble('assistant', String(answer));
     } catch (err) {
+      pending.remove();
       chatBubble('assistant', 'Assistent ist aktuell nicht verfügbar' +
         (err.message && err.message !== 'Fehler 404' ? ' (' + err.message + ')' : ''));
+    } finally {
+      chatBtn.disabled = false;
     }
   }
   chatBtn.addEventListener('click', sendChat);
