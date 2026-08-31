@@ -56,9 +56,12 @@ def test_system_prompt_key_aspects():
     assert "ZUSAMMENBAU" in SYSTEM_PROMPT
     # Tagebuch-Anker (Regression)
     assert "Tagebuch" in SYSTEM_PROMPT
-    assert "FAKTEN AUS DEM TAGEBUCH" in SYSTEM_PROMPT
+    assert "SCHON ERLEDIGT" in SYSTEM_PROMPT
+    assert "OFFENE BEFUNDE" in SYSTEM_PROMPT
     assert "WAHRSCHEINLICHE URSACHEN" in SYSTEM_PROMPT
-    assert "Wiederhole NICHT" in SYSTEM_PROMPT
+    # Erledigtes nicht erneut vorschlagen
+    assert "NICHT erneut" in SYSTEM_PROMPT
+    # Keine Erfindungen
     assert "Keine Erfindungen" in SYSTEM_PROMPT
     # Interaktivität: nächster Schritt + Rückfrage
     assert "Rückfrage" in SYSTEM_PROMPT

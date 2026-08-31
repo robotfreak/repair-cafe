@@ -106,7 +106,7 @@ def test_build_context_full_structure(tmp_db):
     )
     assert lines[1] == "FEHLER: Netzteil tot"
     assert lines[2] == "STATUS: in_arbeit"
-    assert lines[3] == "TAGEBUCH (letzte Einträge):"
+    assert lines[3] == "SCHON ERLEDIGT (nicht wieder vorschlagen):"
     assert lines[-1] == "FRAGE DES NUTZERS: Was tun?"
 
     # Nur die letzten 10 Einträge, chronologisch aufsteigend
@@ -174,6 +174,48 @@ def test_build_context_no_keywords_skips_search(tmp_db, monkeypatch):
     assert "  (keine Treffer)" in ctx
 
 
+def test_build_context_splits_done_vs_open(tmp_db):
+    """Deterministischer Split: schritt/ersatzteil/ergebnis → SCHON ERLEDIGT
+    (Modell darf sie nicht mehr vorschlagen), diagnose/notiz → OFFENE BEFUNDE.
+    Regression: Assistent schlug wiederholt Erledigtes vor (Wahlschalter!)."""
+    from app.context_builder import build_context as bc
+
+    cur = tmp_db.execute("INSERT INTO devices (name) VALUES ('Toaster')")
+    device_id = cur.lastrowid
+    cur = tmp_db.execute(
+        "INSERT INTO tickets (device_id, fault_description) VALUES (?, 'tot')",
+        (device_id,),
+    )
+    ticket_id = cur.lastrowid
+    rows = [
+        ("schritt", "Schrauben mit Dreikant geöffnet", "2026-08-01 10:01:00"),
+        ("diagnose", "Netzteil-Elko aufgequollen", "2026-08-01 10:02:00"),
+        ("ersatzteil", "Ersatzteil bestellt", "2026-08-01 10:03:00"),
+        ("ergebnis", "Erneuter Funktionstest bestanden", "2026-08-01 10:04:00"),
+        ("notiz", "Kunde fragt nach Kosten", "2026-08-01 10:05:00"),
+    ]
+    for entry_type, content, created_at in rows:
+        tmp_db.execute(
+            "INSERT INTO journal_entries (ticket_id, author, entry_type, content, created_at)"
+            " VALUES (?, 'Max', ?, ?, ?)",
+            (ticket_id, entry_type, content, created_at),
+        )
+    tmp_db.commit()
+
+    ctx = bc(tmp_db, ticket_id, "Was fehlt noch?")
+    assert "SCHON ERLEDIGT (nicht wieder vorschlagen):" in ctx
+    assert "OFFENE BEFUNDE (darauf aufbauen):" in ctx
+    # Erledigtes in der Erledigt-Sektion, offenes in der Befund-Sektion
+    done = ctx.split("OFFENE BEFUNDE")[0]
+    open_f = ctx.split("OFFENE BEFUNDE")[1]
+    for done_txt in ("Schrauben", "Ersatzteil bestellt", "Funktionstest"):
+        assert done_txt in done
+        assert done_txt not in open_f
+    for open_txt in ("aufgequollen", "Kosten"):
+        assert open_txt in open_f
+        assert open_txt not in done
+
+
 def test_build_context_empty_sections(tmp_db):
     cur = tmp_db.execute("INSERT INTO devices (name) VALUES ('Toaster')")
     device_id = cur.lastrowid
@@ -186,7 +228,9 @@ def test_build_context_empty_sections(tmp_db):
 
     ctx = build_context(tmp_db, ticket_id, "Was tun?")
     assert "GERÄT: Toaster (—), Hersteller —, Modell —" in ctx
-    assert "  (keine Einträge)" in ctx
+    assert "SCHON ERLEDIGT" in ctx
+    assert "OFFENE BEFUNDE" in ctx
+    assert "  (noch nichts abgeschlossen)" in ctx
     assert "  (keine Treffer)" in ctx
     assert "  (keine)" in ctx
 

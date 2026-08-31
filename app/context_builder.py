@@ -13,6 +13,10 @@ DOCS_MAX = 3
 JOURNAL_MAX = 10
 SNIPPET_MAX = 200
 DOC_TEXT_MAX = 400
+# Diese Eintragstypen sind abgeschlossene Arbeiten — sie landen in
+# SCHON ERLEDIGT, damit das Modell sie nicht erneut vorschlägt.
+# diagnose/notiz sind Befunde/Offenpunkte → OFFENE BEFUNDE.
+DONE_TYPES = ("schritt", "ersatzteil", "ergebnis")
 
 
 def extract_keywords(*texts):
@@ -69,13 +73,21 @@ def build_context(conn, ticket_id, question, max_chars=6000):
         f"STATUS: {row['status']}",
     ]
 
-    # 2. Letzte 10 Tagebuch-Einträge (chronologisch aufsteigend ausgeben)
+    # 2. Letzte 10 Tagebuch-Einträge (chronologisch aufsteigend), deterministisch
+    #    gesplittet: erledigte Arbeiten vs. offene Befunde — das Modell soll
+    #    Erledigtes nicht mehr als Vorschlag rezitieren (Regression).
     entries = conn.execute(
         "SELECT * FROM journal_entries WHERE ticket_id = ?"
         " ORDER BY created_at DESC, id DESC LIMIT ?",
         (ticket_id, JOURNAL_MAX),
     ).fetchall()
-    journal_lines = [_format_journal_line(e) for e in reversed(entries)]
+    entries_asc = list(reversed(entries))
+    done_lines = [
+        _format_journal_line(e) for e in entries_asc if e["entry_type"] in DONE_TYPES
+    ]
+    open_lines = [
+        _format_journal_line(e) for e in entries_asc if e["entry_type"] not in DONE_TYPES
+    ]
 
     # 3. FTS-Suche über frühere Reparaturen (aktuelles Ticket ausgeschlossen)
     keywords = extract_keywords(row["fault_description"], question)
@@ -100,10 +112,23 @@ def build_context(conn, ticket_id, question, max_chars=6000):
 
     tail = [f"FRAGE DES NUTZERS: {question}"]
 
+    def journal_sections(done, open_f):
+        return [
+            (
+                "SCHON ERLEDIGT (nicht wieder vorschlagen):",
+                done if done else ["  (noch nichts abgeschlossen)"],
+            ),
+            (
+                "OFFENE BEFUNDE (darauf aufbauen):",
+                open_f if open_f else ["  (keine offenen Befunde)"],
+            ),
+        ]
+
     def assemble(journal, hits, docs):
         parts = list(head)
-        parts.append("TAGEBUCH (letzte Einträge):")
-        parts.extend(journal if journal else ["  (keine Einträge)"])
+        for label, lines in journal_sections(*journal):
+            parts.append(label)
+            parts.extend(lines)
         parts.append("FRÜHERE REPARATUREN (Suchtreffer):")
         parts.extend(hits if hits else ["  (keine Treffer)"])
         parts.append("DOKUMENTE:")
@@ -111,25 +136,35 @@ def build_context(conn, ticket_id, question, max_chars=6000):
         parts.extend(tail)
         return "\n".join(parts)
 
-    total = len("\n".join(head)) + 1 + len("\n".join(tail)) + 3  # Kopf+Frage + 3 Header
+    n_headers = 4  # 2 Journal-Sektionen + Suchtreffer + Dokumente
+    total = len("\n".join(head)) + 1 + len("\n".join(tail)) + n_headers
     if total > max_chars:
         # Kopf+Frage allein passen nicht: Header und Platzhalter fallen mit.
         return "\n".join(head + tail)
 
-    context = assemble(journal_lines, hit_lines, doc_lines)
+    context = assemble((done_lines, open_lines), hit_lines, doc_lines)
     if len(context) <= max_chars:
         return context
 
     # Mittelteile von hinten droppen: erst Dokumente, dann Suchtreffer,
-    # dann älteste Tagebuch-Einträge — bis alles passt.
-    docs, hits, journal = list(doc_lines), list(hit_lines), list(journal_lines)
-    while len(assemble(journal, hits, docs)) > max_chars:
+    # dann älteste offene Befunde, dann älteste erledigte Schritte.
+    # ERLEDIGT bleibt so lange wie möglich — es ist der Anti-Wiederholungsschutz.
+    docs, hits = list(doc_lines), list(hit_lines)
+    done, open_f = list(done_lines), list(open_lines)
+    while len(assemble((done, open_f), hits, docs)) > max_chars:
         if docs:
             docs.pop()
         elif hits:
             hits.pop()
-        elif journal:
-            journal.pop(0)
+        elif open_f:
+            open_f.pop(0)
+        elif done:
+            done.pop(0)
         else:
             break
-    return assemble(journal, hits, docs)
+    final = assemble((done, open_f), hits, docs)
+    if len(final) > max_chars:
+        # Extremfall: selbst leere Sektionen mit Platzhaltern passen nicht
+        # (sehr kleines max_chars) → nur Kopf+Frage.
+        return "\n".join(head + tail)
+    return final
