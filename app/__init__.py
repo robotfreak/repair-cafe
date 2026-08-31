@@ -36,7 +36,6 @@ def create_app(data_dir=None):
     from app.journal import bp as journal_bp
     from app.search import bp as search_bp
     from app.documents import bp as documents_bp
-    from app.assistant import bp as assistant_bp
     from app.equipment import bp as equipment_bp
 
     app.register_blueprint(devices_bp)
@@ -46,7 +45,6 @@ def create_app(data_dir=None):
     app.register_blueprint(journal_bp)
     app.register_blueprint(search_bp)
     app.register_blueprint(documents_bp)
-    app.register_blueprint(assistant_bp)
     app.register_blueprint(equipment_bp)
 
     @app.route("/")

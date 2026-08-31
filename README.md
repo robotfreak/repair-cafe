@@ -1,10 +1,12 @@
-# Repair-Café Assistent
+# Repair-Café Laufzettel-System
 
-Lokaler KI-Assistent für Repair-Cafés auf dem Raspberry Pi 500: Laufzettel-Verwaltung,
-Reparatur-Tagebuch mit Volltextsuche, Dokumenten-/Datenblatt-Verwaltung und ein
-Reparatur-Assistent (lokal per ollama/phi4-mini — keine Cloud, DSGVO-freundlich).
+Lokales Verwaltungssystem für Repair-Cafés auf dem Raspberry Pi 500: Laufzettel-Board,
+Reparatur-Tagebuch mit Volltextsuche und Dokumenten-/Datenblatt-Verwaltung
+(100% lokal — keine Cloud, DSGVO-freundlich).
 
 **Alle Daten bleiben auf dem Pi.** Es gibt keine externe API, keinen API-Key, keine Cloud-Anbindung.
+Für KI-Reparaturhilfe nutzt das Café einen externen Gemini-Gem (separates Tool, Bestandteil
+dieses Systems nicht mehr — der frühere lokale ollama-Assistent wurde entfernt).
 
 ## Quick Start
 
@@ -45,12 +47,11 @@ Tablet (Browser, ein Gerät)
    ▼
 Flask (systemd: repair-cafe.service)  ──►  SQLite data/repair.db (WAL, FTS5)
    │                                        data/documents/  data/signatures/
-   └──► ollama (localhost:11434, phi4-mini, ~4 tok/s warm)
 ```
 
-- **Backend:** Python 3.11 (`.venv`), Flask-Blueprints pro Domain (`app/devices.py`, `app/tickets.py`, `app/journal.py`, `app/search.py`, `app/documents.py`, `app/waivers.py`, `app/assistant.py`), Kontext-Builder (`app/context_builder.py`) als reine, testbare Funktion.
+- **Backend:** Python 3.11 (`.venv`), Flask-Blueprints pro Domain (`app/devices.py`, `app/tickets.py`, `app/journal.py`, `app/search.py`, `app/documents.py`, `app/waivers.py`, `app/equipment.py`).
 - **Frontend:** Vanilla JS Einseiten-App (`static/app.js`, Hash-Routing), kein Framework, kein Build-Schritt.
-- **Tests:** 164 pytest-Tests (TDD-entwickelt). ollama wird in Tests immer gemockt.
+- **Tests:** pytest-Suite (TDD-entwickelt).
 
 ## Betrieb
 
@@ -80,22 +81,13 @@ Unterschriften ohne passende DB-Einträge (und umgekehrt) sind wertlos.
 | Symptom | Ursache / Lösung |
 |---|---|
 | UI nicht erreichbar | `systemctl status repair-cafe` — falls failed: `journalctl -u repair-cafe -n 50`. Port belegt? `ss -tlnp \| grep 5002`. |
-| Assistent antwortet nicht | Läuft ollama? `systemctl status ollama` und `ollama list` (phi4-mini muss gelistet sein). Nach längerer Leerlaufzeit lädt das Modell 1–2 Min. in den RAM — erste Antwort dauert dann länger. |
 | VDE-Prüfung fehlt am Laufzettel | Das Gerät hat keine Schutzklasse. Im Geräte-Tab aufklappen, Schutzklasse setzen (SK I/II/III) — danach erscheint die Prüfung (freiwillig) am Ticket. |
-| Assistent sehr langsam | Normal auf dem Pi (2–4 tok/s → 60–220 s pro Antwort, siehe Abschnitt unten). Deutlich länger → Pi-Last prüfen (`top`), andere ollama-Jobs stoppen. |
 | Upload schlägt fehl | Max. 20 MB; erlaubt: pdf/jpg/jpeg/png/webp. Genauer Grund steht als Fehlermeldung im UI und im Log. |
-
-## KI-Assistent: Performance-Realität (Pi 500)
-
-- phi4-mini (3.8B, Q4_K_M) generiert mit ~2–4 tok/s → eine Assistent-Antwort dauert **60–220 s**. Das UI zeigt den Ladezustand; das ist für das Café-Setting akzeptabel (Frage stellen → weiter reparieren → Antwort lesen).
-- Antworten sind auf 400 Token begrenzt (`NUM_PREDICT` in `app/assistant.py`); der System-Prompt fordert kompakte Stichpunkte.
-- Kontext ist auf 6000 Zeichen gecappt (`build_context`); bei Überschreitung werden Dokumente/älteste Einträge zuerst gekürzt.
-- Modell kalt (nach ~10 Min. Idle): erste Antwort plus ~1–2 Min. Ladezeit. Falls das stört: `OLLAMA_KEEP_ALIVE` in der ollama-Service-Datei erhöhen.
 
 ## Wichtige Hinweise
 
 1. **Haftungs­vereinbarung** (`app/waiver_text.py`, Version `2026-08-30`): überarbeitete „Reparatur- und Haftungsvereinbarung" (Internetvorlage, verschmolzen mit den bisherigen Punkten) — **vor dem ersten echten Café-Termin juristisch gegenprüfen** (Vereinsrecht/Versicherung). Version anpassen = eine Zeile; alte Waiver bleiben mit ihrer Version dokumentiert.
 2. **DSGVO:** Namen + Unterschriften sind personenbezogene Daten; sie liegen ausschließlich lokal (DB + `data/signatures/`). Backups ebenfalls nur lokal (`~/repair-backups/`). Im UI nur Vornamen/Pseudonyme erfassen.
 3. **Demo-Daten:** Bereinigt am 29.08.2026 — die Abnahme-Test-Daten (Föhn, Toaster, Smoke-Test-Bohrer) wurden gelöscht; verbleibend ist nur das echte Gerät **Hameg HM705** (Ticket 3, Tagebuch + Handbücher + Unterschrift). Soll die DB vor dem ersten Café-Termin komplett leer starten: `systemctl stop repair-cafe && rm data/repair.db* data/signatures/* && sudo systemctl start repair-cafe`.
-4. **Server:** gunicorn (2 Worker × 4 Threads, Timeout 300 s) statt Flask-Devserver; Unit in `scripts/repair-cafe.service`. Lange Assistent-Antworten blockieren das UI nicht.
+4. **Server:** gunicorn (2 Worker × 4 Threads, Timeout 300 s) statt Flask-Devserver; Unit in `scripts/repair-cafe.service`.
 5. **Sicherheit (bewusste Design-Entscheidung für ein geschlossenes Café-LAN):** Es gibt **keine Authentifizierung** — jeder im WLAN kann Daten lesen, ändern und löschen. Betrieb nur im vertrauenswürdigen Vereins-WLAN, nicht in offenen Netzen. `/api/documents/<id>/fetch` lädt serverseitig beliebige http(s)-URLs (SSRF-Restrisiko) — bei Bedarf URL-Whitelist in `app/documents.py` ergänzen. Keine Cookie-Authentifizierung, daher kein klassisches CSRF-Risiko.

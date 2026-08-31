@@ -1,4 +1,4 @@
-/* Repair-Café-Assistent – Einseiten-App (Vanilla JS, kein Framework). */
+/* Repair-Café Laufzettel – Einseiten-App (Vanilla JS, kein Framework). */
 'use strict';
 
 /* ====================== Konstanten ====================== */
@@ -929,7 +929,7 @@ async function renderTicket(id) {
           el('div', { class: 'protocol-sign' }, el('div', { class: 'sign-line' }),
             el('span', {}, 'Ort, Datum'))),
         el('p', { class: 'protocol-footnote' },
-          'Repair-Café-Assistent · Laufzettel im Netz: http://'
+          'Repair-Café Laufzettel · Im Netz: http://'
           + location.host + '/#/ticket/' + ticket.id
           + (hasSaved ? '' : ' · Blanko-Formular: Messwerte handschriftlich eintragen'))));
   }
@@ -957,58 +957,6 @@ async function renderTicket(id) {
     window.print();
     setTimeout(cleanup, 120000); // Fallback für Browser ohne afterprint
   }
-
-  /* --- Assistent-Panel (Unit E kommt später: 404 graceful) --- */
-  const chatLog = el('div', { class: 'chat-log' });
-  const chatInput = el('input', { type: 'text', placeholder: 'Frage an den Assistenten …' });
-  const chatBtn = el('button', { type: 'button', class: 'btn' }, 'Senden');
-  const chatHistory = [];
-  function chatBubble(role, text) {
-    const msg = el('div', { class: 'chat-msg chat-' + role }, safeText(text));
-    chatHistory.push({ role, text });
-    chatLog.append(msg);
-    chatLog.scrollTop = chatLog.scrollHeight;
-    return msg;
-  }
-  async function sendChat() {
-    const question = chatInput.value.trim();
-    if (!question) return;
-    // Verlauf VOR dem Einfügen der aktuellen Frage einfrieren: die Frage
-    // geht als `question` mit, ältere Turn-Paare als `history` (Fehler-
-    // Meldungen raus, damit das Modell sie nicht als Antwort liest).
-    const history = chatHistory
-      .filter((m) => m.text !== 'Leere Antwort'
-        && !m.text.startsWith('Assistent ist aktuell nicht verfügbar'))
-      .map((m) => ({ role: m.role, content: m.text }));
-    chatBubble('user', question);
-    chatInput.value = '';
-    chatBtn.disabled = true;
-    // Transienter Lade-Bubble: nur im DOM, NICHT im chatHistory (sonst
-    // landet der Hinweis beim nächsten Senden als "Antwort" im Verlauf).
-    const pending = el('div', { class: 'chat-msg chat-assistant' },
-      safeText('Assistent denkt nach … (auf dem Pi kann das 1–3 Minuten dauern)'));
-    chatLog.append(pending);
-    chatLog.scrollTop = chatLog.scrollHeight;
-    try {
-      const data = await api('/api/assistant/chat', {
-        method: 'POST',
-        body: { ticket_id: Number(id), question, history },
-      });
-      const answer = (data && (data.answer ?? data.reply ?? data.message)) || 'Leere Antwort';
-      pending.remove();
-      chatBubble('assistant', String(answer));
-    } catch (err) {
-      pending.remove();
-      chatBubble('assistant', 'Assistent ist aktuell nicht verfügbar' +
-        (err.message && err.message !== 'Fehler 404' ? ' (' + err.message + ')' : ''));
-    } finally {
-      chatBtn.disabled = false;
-    }
-  }
-  chatBtn.addEventListener('click', sendChat);
-  chatInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); sendChat(); }
-  });
 
   view.replaceChildren(
     el('section', { class: 'ticket-view' },
@@ -1046,9 +994,7 @@ async function renderTicket(id) {
           el('div', { class: 'doc-upload-row' }, docFile, docBtn))),
 
       el('aside', { class: 'panel assistant-panel' },
-        el('h2', {}, 'Assistent'),
-        chatLog,
-        el('div', { class: 'chat-input-row' }, chatInput, chatBtn),
+        el('h2', {}, 'Drucken & Export'),
         el('button', {
           type: 'button', class: 'btn btn-wide',
           onclick: () => printWithPage('A5 portrait', null, null),
