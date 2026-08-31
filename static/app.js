@@ -516,13 +516,14 @@ function initSignatureCanvas(canvas, onChange) {
 /* ====================== TICKET-VIEW ====================== */
 
 async function renderTicket(id) {
-  const [ticket, entries, waiver, documents, checksData, initialTest] = await Promise.all([
+  const [ticket, entries, waiver, documents, checksData, initialTest, waiverTextData] = await Promise.all([
     api('/api/tickets/' + id),
     api('/api/tickets/' + id + '/entries'),
     api('/api/tickets/' + id + '/waiver').catch(() => null),
     api('/api/documents?ticket_id=' + id).catch(() => []),
     api('/api/tickets/' + id + '/equipment-test/checks').catch(() => null),
     api('/api/tickets/' + id + '/equipment-test').catch(() => null),
+    api('/api/waiver').catch(() => null),
   ]);
   let savedTest = initialTest;
 
@@ -787,6 +788,33 @@ async function renderTicket(id) {
     el('span', { class: 'checkbox' }),
     el('span', { class: done ? 'done' : '' }, label),
     value ? el('span', { class: 'ts' }, safeText(value)) : null);
+  /* --- Waiver-Druckblöcke --- */
+  /* Kompakt (A5-Laufzettel): wer hat wann unterschrieben + Unterschrift */
+  const printWaiver = waiver
+    ? el('div', { class: 'print-waiver' },
+        el('p', { class: 'notes-title' }, 'Haftungsausschluss'),
+        el('img', { class: 'signature-img', src: waiver.signature_url,
+          alt: 'Unterschrift von ' + waiver.signed_name }),
+        el('p', { class: 'print-waiver-meta' },
+          'Unterschrieben von ' + waiver.signed_name
+          + ' am ' + fmtDateTime(waiver.signed_at)
+          + ' · Version ' + waiver.waiver_version
+          + ' · Volltext als separater Druck „A4 Haftungsausschluss"')) : null;
+  /* Volltext (eigener A4-Druck): Klauseln + Unterschriftsbild */
+  const waiverFull = el('div', { class: 'print-waiver-page' },
+    el('p', { class: 'waiver-page-title' }, 'Reparatur- und Haftungsvereinbarung — Repair-Café'),
+    el('p', { class: 'waiver-page-version' },
+      'Version ' + (waiverTextData ? waiverTextData.version : '?')
+      + (waiver ? ' · unterschrieben von ' + waiver.signed_name
+        + ' am ' + fmtDateTime(waiver.signed_at) : '')),
+    el('pre', { class: 'waiver-page-text' },
+      waiverTextData ? waiverTextData.text : 'Text konnte nicht geladen werden.'),
+    waiver ? el('div', { class: 'waiver-page-sign' },
+      el('img', { class: 'signature-img', src: waiver.signature_url,
+        alt: 'Unterschrift von ' + waiver.signed_name }),
+      el('p', {},
+        safeText(waiver.signed_name), ' · ', fmtDateTime(waiver.signed_at))) : null);
+
   const printChecklines = el('div', { class: 'print-checklines' },
     statusLine('offen', fmtDateTime(ticket.created_at), Boolean(ticket.created_at)),
     statusLine('in Arbeit', fmtDateTime(ticket.started_at), Boolean(ticket.started_at)),
@@ -937,8 +965,8 @@ async function renderTicket(id) {
      (nach dem Speichern wäre sonst der Stand vom Seitenaufbau gedruckt). */
   const protoHost = el('div', { class: 'print-protocol-page' });
 
-  function printWithPage(size, before, after) {
-    protoHost.replaceChildren(buildProtocolPage());
+  function printWithPage(size, before, after, pageHost) {
+    if (pageHost !== null) protoHost.replaceChildren(...(pageHost ? [pageHost] : [buildProtocolPage()]));
     let style = document.getElementById('print-page-style');
     if (!style) {
       style = document.createElement('style');
@@ -948,6 +976,7 @@ async function renderTicket(id) {
     style.textContent = '@page { size: ' + size + '; margin: 12mm; }';
     const cleanup = () => {
       document.body.classList.remove('printing-protocol');
+      document.body.classList.remove('printing-waiver');
       const s = document.getElementById('print-page-style');
       if (s) s.remove();
       window.removeEventListener('afterprint', cleanup);
@@ -976,10 +1005,12 @@ async function renderTicket(id) {
           statusBadge(ticket.status)),
         statusActions,
         waiverBox,
+        printWaiver,
         equipmentSection,
         printLogo,
         printChecklines,
         printNotes,
+        printProtocol,
         printUrl,
 
         el('h2', {}, 'Tagebuch'),
@@ -1004,7 +1035,14 @@ async function renderTicket(id) {
           onclick: () => printWithPage('A4 portrait',
             () => document.body.classList.add('printing-protocol'),
             () => document.body.classList.remove('printing-protocol')),
-        }, '📄 VDE-Messprotokoll drucken'))));
+        }, '📄 VDE-Messprotokoll drucken'),
+        el('button', {
+          type: 'button', class: 'btn btn-wide',
+          onclick: () => printWithPage('A4 portrait',
+            () => document.body.classList.add('printing-waiver'),
+            () => document.body.classList.remove('printing-waiver'),
+            waiverFull),
+        }, '📝 A4 Haftungsausschluss drucken'))));
     /* Protokoll-Host MUSS außerhalb von .ticket-view liegen — sie wird
        im Protokoll-Druck ausgeblendet; drin wäre es immer eine leere Seite. */
     view.append(protoHost);

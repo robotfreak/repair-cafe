@@ -7,6 +7,33 @@
   margin: 1cm;
 }
 
+/* ---------- Seitenumbruch-Regeln (Portrait-A5-freundlich) ---------- */
+
+@media print {
+  /* Blöcke nicht auseinanderreißen */
+  .journal-entry,
+  .doc-row,
+  .checkline,
+  .waiver-box,
+  .print-waiver,
+  .print-equipment,
+  .print-protocol-page {
+    break-inside: avoid;
+  }
+
+  /* Überschriften nie als Waisen am Seitenende */
+  h1, h2, .notes-title {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  .ticket-view section,
+  .ticket-main {
+    orphans: 2;
+    widows: 2;
+  }
+}
+
 /* ---------- Screen-Elemente ausblenden ---------- */
 
 @media print {
@@ -98,28 +125,70 @@
     border: 0.75pt solid #000;
     display: inline-block;
   }
-  .checkline .done { text-decoration: line-through; }
+  .checkline .done { text-decoration: none; }
   .checkline .ts { color: #444; font-size: 8.5pt; margin-left: auto; }
 
   /* ---------- Notizlinien ---------- */
 
-  .print-notes { display: block !important; margin-top: 10pt; }
+  .print-notes { display: block !important; margin-top: 8pt; }
   .print-notes .notes-title { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
   .print-notes .note-line {
     border-bottom: 0.5pt solid #999;
-    height: 16pt;
+    height: 13pt;
   }
 
   /* ---------- Waiver / Signatur ---------- */
 
-  .waiver-box { border: 0.5pt solid #666; padding: 5pt; margin-top: 8pt; }
-  .waiver-box-body { display: block !important; }
+  /* Interaktive Screen-Box (details/summary) im Druck ausblenden —
+     auf dem A5-Laufzettel genügt die Referenz „Volltext als separater
+     Druck" — die Unterschrift gehört auf den A4-Volltext-Druck. */
+  .waiver-box { display: none !important; }
+  .print-waiver .signature-img { display: none !important; }
   .signature-img {
     max-width: 45mm;
     max-height: 18mm;
     border: 0.5pt solid #999;
   }
   .print-waiver-meta { display: block !important; font-size: 9pt; color: #000; }
+
+  /* Kompakter Waiver-Block auf dem A5-Laufzettel */
+  .print-waiver { display: block !important; margin-top: 8pt; }
+  .print-waiver .notes-title { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
+  .print-waiver .signature-img { display: block; max-width: 40mm; max-height: 16mm; }
+
+  /* ---------- A4-Haftungsausschluss (eigener Druck) ---------- */
+
+  .print-waiver-page { display: none !important; } /* normaler Druck: weg */
+  body.printing-waiver .ticket-view { display: none !important; }
+  body.printing-waiver .print-protocol-page { display: block !important; }
+  body.printing-waiver .print-waiver-page { display: block !important; }
+  body.printing-waiver .waiver-page-title {
+    font-size: 14pt;
+    font-weight: 700;
+    margin: 0 0 4pt;
+    border-bottom: 1.5pt solid #000;
+    padding-bottom: 4pt;
+  }
+  body.printing-waiver .waiver-page-version { font-size: 9pt; color: #333; margin: 0 0 10pt; }
+  body.printing-waiver .waiver-page-text {
+    font-family: inherit;
+    white-space: pre-wrap;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    margin: 0 0 14pt;
+  }
+  body.printing-waiver .waiver-page-sign {
+    border: 0.75pt solid #000;
+    display: inline-block;
+    padding: 6pt 10pt;
+  }
+  body.printing-waiver .waiver-page-sign .signature-img {
+    display: block;
+    max-width: 60mm;
+    max-height: 24mm;
+    margin-bottom: 3pt;
+  }
+  body.printing-waiver .waiver-page-sign p { margin: 0; font-size: 9pt; }
 
   /* ---------- VDE-Prüfprotokoll ---------- */
 
@@ -143,6 +212,11 @@
   /* ---------- Ticket-URL als Text ---------- */
 
   .print-url { display: block !important; margin-top: 8pt; font-size: 8pt; color: #333; word-break: break-all; }
+
+  /* Dokumentenliste im Druck: nur Titel + Typ, keine Screen-Links */
+  .mini-list a { display: none !important; }
+  .mini-list .badge { border: 0.5pt solid #000; }
+  .mini-list li { break-inside: avoid; }
 
   /* ---------- Separates VDE-Messprotokoll (nur im Protokoll-Druck sichtbar) ---------- */
 
@@ -226,12 +300,16 @@
   .journal-entry {
     border: none;
     border-bottom: 0.5pt dotted #999;
-    padding: 2pt 0;
+    padding: 1.5pt 0;
     background: #fff;
     break-inside: avoid;
   }
-  .journal-head { font-size: 8.5pt; }
-  .journal-content { font-size: 9.5pt; }
+  .journal-head { font-size: 8pt; }
+  .journal-content { font-size: 9pt; }
+
+  /* Dokumente kompakt (Platz für 2 Seitenausnutzung) */
+  .mini-list { margin: 0; padding: 0; }
+  .mini-list li { padding: 1.5pt 0; font-size: 9.5pt; }
 }
 
 /* ---------- Unsichtbare Druck-Anhänge auf dem Screen ---------- */
@@ -242,6 +320,8 @@
 .print-equipment,
 .print-protocol-page,
 .print-logo,
+.print-waiver,
+.print-waiver-page,
 .print-waiver-meta {
   display: none; /* Screen: unsichtbar */
 }
