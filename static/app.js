@@ -332,7 +332,7 @@ function buildNewTicketForm(container, devices) {
     labeledInput('Hersteller', 'nt-manufacturer', { maxlength: 500 }),
     labeledInput('Modell', 'nt-model', { maxlength: 500 }),
     el('div', { class: 'form-row' },
-      el('label', { for: 'nt-schutzklasse' }, 'Schutzklasse (für VDE-Prüfung)'),
+      el('label', { for: 'nt-schutzklasse' }, 'Schutzklasse (für Isolationsprüfung)'),
       el('select', { id: 'nt-schutzklasse' },
         el('option', { value: '' }, 'unbekannt / später ergänzen'),
         el('option', { value: 'I' }, SK_LABELS['I']),
@@ -541,7 +541,7 @@ async function renderTicket(id) {
 
   const waiverBox = buildWaiverBox(waiver);
 
-  /* --- VDE/DGUV-Geräteprüfung (Schutzklasse-abhängige Checkliste) --- */
+  /* --- Geräteprüfung (UNI-T UT-501 Isolationsprüfung, nicht VDE-konform) --- */
   function evaluateLocal(check, value) {
     if (check.direction === 'bool') return value === 'ok';
     const num = Number(value);
@@ -557,7 +557,7 @@ async function renderTicket(id) {
     const wrap = el('section', { class: 'equipment-section' });
     if (!ticket.schutzklasse || !checksData || !checksData.checks) {
       wrap.append(el('details', { class: 'equipment-details' },
-        el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · optional)',
+        el('summary', {}, '⚡ Isolationsprüfung (UNI-T UT-501 · nicht VDE-konform)',
           el('span', { class: 'badge test-verdict' }, 'offen')),
         el('p', { class: 'muted' },
           'Für dieses Gerät ist keine Schutzklasse hinterlegt. Bitte im Geräte-Tab setzen '
@@ -607,44 +607,15 @@ async function renderTicket(id) {
     const notes = el('input', { type: 'text', maxlength: 1000, placeholder: 'Bemerkung (optional)',
       value: (savedTest && savedTest.notes) || '' });
 
-    /* --- Prüfgerät (Messmittel): Dropdown aus DB + ＋-Neu + Freitext --- */
-    const tdSel = el('select', { 'aria-label': 'Messgerät wählen' },
-      el('option', { value: '' }, 'Messgerät – bitte wählen …'));
-    let savedTdId = null;
-    if (savedTest && savedTest.test_device_id) savedTdId = savedTest.test_device_id;
-    api('/api/test-devices').then((td) => {
-      for (const d of td.test_devices) {
-        const label = d.name + (d.serial_number ? ' · SN ' + d.serial_number : '')
-          + (d.calibration_until ? ' · kal. bis ' + d.calibration_until : '');
-        const opt = el('option', { value: String(d.id) }, label);
-        tdSel.append(opt);
-        if (savedTdId === d.id) tdSel.value = String(d.id);
-      }
-    }).catch(() => {});
-    const tdNewBtn = el('button', { type: 'button', class: 'btn btn-small', title: 'Messgerät neu anlegen' }, '＋');
-    tdNewBtn.addEventListener('click', () => withBusy(tdNewBtn, async () => {
-      const name = prompt('Name des Messgeräts (z. B. „METRAHIT ENERGY“):');
-      if (name === null) return;
-      if (!name.trim()) { showToast('Name ist erforderlich'); return; }
-      const serial = prompt('Seriennummer (optional, leer lassen = überspringen):');
-      if (serial === null) serial = '';
-      const cal = prompt('Kalibriert bis (optional, JJJJ-MM-TT):');
-      if (cal === null) cal = '';
-      const created = await api('/api/test-devices', {
-        method: 'POST',
-        body: { name: name.trim(), serial_number: serial.trim() || null,
-                calibration_until: cal.trim() || null },
-      });
-      const label = created.name + (created.serial_number ? ' · SN ' + created.serial_number : '')
-        + (created.calibration_until ? ' · kal. bis ' + created.calibration_until : '');
-      tdSel.append(el('option', { value: String(created.id) }, label));
-      tdSel.value = String(created.id);
-      showToast('Messgerät angelegt: ' + created.name);
-    }));
+    /* --- Messgerät fest auf UNI-T UT-501 (ID=2) voreingestellt --- */
+    const tdSel = el('select', { 'aria-label': 'Messgerät wählen', disabled: 'disabled' },
+      el('option', { value: '2', selected: 'selected' }, 'UNI-T UT-501 (fest eingestellt)'));
+    const tdNewBtn = null; // Nicht benötigt
     const tdFree = el('input', { type: 'text', maxlength: 300,
-      placeholder: 'oder freier Text (überschreibt Auswahl)',
-      title: 'Freitext für Protokollzeile, z. B. „Benning DIN 70542 (Nr. 123)“' });
+      placeholder: 'oder freier Text (optional)',
+      title: 'Freitext für Protokollzeile' });
     tdFree.value = '';
+    let savedTdId = 2;  // Echte DB-ID
 
     const saveBtn = el('button', { type: 'button', class: 'btn btn-primary' },
       savedTest ? 'Prüfung aktualisieren' : 'Prüfung speichern');
@@ -667,10 +638,12 @@ async function renderTicket(id) {
       for (const { check, input } of inputs) {
         if (input.value !== '') payloadMeasurements[check.label] = input.value;
       }
-      // Prüfgerät: Freitext hat Vorrang, sonst gewählte ID (Snapshot baut das Backend)
-      let testDevicePayload = null;
-      if (tdFree.value.trim()) testDevicePayload = tdFree.value.trim();
-      else if (tdSel.value) testDevicePayload = { id: Number(tdSel.value) };
+      // Messgerät fest auf UNI-T UT-501 (DB-ID=2)
+      const testDevicePayload = { id: 2 };  // Echte DB-ID
+      // Freitext optional überschreiben
+      if (tdFree.value.trim()) {
+        testDevicePayload.name = tdFree.value.trim();
+      }
       const res = await api('/api/tickets/' + id + '/equipment-test', {
         method: 'POST',
         body: { measurements: payloadMeasurements, tester: tester.value.trim(),
@@ -686,14 +659,14 @@ async function renderTicket(id) {
     const inner = () => el('div', { class: 'equipment-body' },
       el('p', { class: 'muted' }, 'Schutzklasse SK ' + checksData.protection_class
         + (checksData.heating_kw ? ' · Heizelement ' + checksData.heating_kw + ' kW' : '')
-        + ' · Prüfgrundsatz DIN VDE 0701-0702 / DGUV V3'),
+        + ' · Prüfgundsatz: Isolationswiderstand messen (DIN VDE 0701-0702 Referenz)'),
       table,
       el('div', { class: 'equipment-meta' }, tester, notes,
         el('div', { class: 'form-row td-row' }, tdSel, tdNewBtn), tdFree),
       saveBtn,
       info, errBoxEq);
     wrap.append(el('details', { class: 'equipment-details', open: !savedTest },
-      el('summary', {}, '⚡ VDE-Prüfung (DGUV V3 · optional · SK ' + checksData.protection_class + ') ', summaryBadge),
+      el('summary', {}, '⚡ Isolationsprüfung (UNI-T UT-501 · SK ' + checksData.protection_class + ') ', summaryBadge),
       inner()));
     return wrap;
   }
@@ -821,9 +794,6 @@ async function renderTicket(id) {
     statusLine('erledigt', fmtDateTime(ticket.finished_at), Boolean(ticket.finished_at)),
     statusLine('nicht reparierbar', fmtDateTime(ticket.finished_at), false),
     statusLine('abgeholt', fmtDateTime(ticket.picked_up_at), Boolean(ticket.picked_up_at)));
-  const printNotes = el('div', { class: 'print-notes' },
-    el('p', { class: 'notes-title' }, 'Notizen:'),
-    ...Array.from({ length: 10 }, () => el('div', { class: 'note-line' })));
   const printUrl = el('div', { class: 'print-url' },
     'Laufzettel im Netz: http://' + location.host + '/#/ticket/' + ticket.id);
   const printLogo = el('img', {
@@ -833,7 +803,7 @@ async function renderTicket(id) {
   });
   printLogo.addEventListener('error', () => printLogo.remove());
 
-  /* --- VDE-Prüfprotokoll im Druck (aus gespeicherter Prüfung) --- */
+  /* --- Prüfprotokoll im Druck (aus gespeicherter Prüfung) --- */
   let printProtocol;
   /* Prüfgerät-Zeile (Name · SN · kal. bis) aus dem Snapshot */
   const tdLine = (prefix) => {
@@ -849,7 +819,7 @@ async function renderTicket(id) {
   if (savedTest && savedTest.measurements) {
     printProtocol = el('div', { class: 'print-equipment' },
       el('p', { class: 'notes-title' },
-        '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3) — optional: ',
+        '⚡ Isolationsprüfung mit UNI-T UT-501 (nicht VDE-konform) — ',
         savedTest.verdict === 'bestanden' ? 'BESTANDEN' : 'NICHT BESTANDEN',
         ' · Schutzklasse ' + savedTest.protection_class
         + (savedTest.heating_kw ? ' (' + savedTest.heating_kw + ' kW)' : '')),
@@ -865,7 +835,7 @@ async function renderTicket(id) {
         + (savedTest.notes ? ' · ' + savedTest.notes : '')));
   } else {
     printProtocol = el('div', { class: 'print-equipment' },
-      el('p', { class: 'notes-title' }, '⚡ VDE-Prüfung nach DIN VDE 0701-0702 (DGUV V3) — optional:'),
+      el('p', { class: 'notes-title' }, '⚡ Isolationsprüfung mit UNI-T UT-501 (nicht VDE-konform):'),
       schutzklasseHintLines());
   }
   function schutzklasseHintLines() {
@@ -885,7 +855,7 @@ async function renderTicket(id) {
     return rows;
   }
 
-  /* --- Separates VDE-Messprotokoll (A4-hoch, eigener Druckmodus) --- */
+  /* --- Separates Messprotokoll (A4-hoch, eigener Druckmodus) --- */
   function buildProtocolPage() {
     const hasSaved = savedTest && savedTest.measurements;
     const checks = checksData && checksData.checks ? checksData.checks : [];
@@ -927,7 +897,7 @@ async function renderTicket(id) {
     return el('div', { class: 'print-protocol-page' },
       el('div', { class: 'protocol-page' },
         el('h1', { class: 'protocol-title' },
-          'Messprotokoll — Prüfung nach DIN VDE 0701-0702 (DGUV V3)'),
+          'Messprotokoll — Isolationsprüfung mit UNI-T UT-501 (nicht VDE-konform)'),
         el('div', { class: 'protocol-head-grid' },
           metaFill('Gerät', ticket.device_name),
           metaFill('Laufzettel', '#' + ticket.id + ' · ' + ticket.fault_description),
@@ -1009,7 +979,6 @@ async function renderTicket(id) {
         equipmentSection,
         printLogo,
         printChecklines,
-        printNotes,
         printProtocol,
         printUrl,
 
@@ -1028,14 +997,14 @@ async function renderTicket(id) {
         el('h2', {}, 'Drucken & Export'),
         el('button', {
           type: 'button', class: 'btn btn-wide',
-          onclick: () => printWithPage('A5 portrait', null, null),
-        }, '🖨 Laufzettel drucken'),
+          onclick: () => printWithPage('A4 portrait', null, null),
+        }, '🖨 Laufzettel drucken (A4)'),
         el('button', {
           type: 'button', class: 'btn btn-wide',
           onclick: () => printWithPage('A4 portrait',
             () => document.body.classList.add('printing-protocol'),
             () => document.body.classList.remove('printing-protocol')),
-        }, '📄 VDE-Messprotokoll drucken'),
+        }, '📄 Messprotokoll (UNI-T UT-501) drucken'),
         el('button', {
           type: 'button', class: 'btn btn-wide',
           onclick: () => printWithPage('A4 portrait',
@@ -1045,7 +1014,7 @@ async function renderTicket(id) {
         }, '📝 A4 Haftungsausschluss drucken'))));
     /* Protokoll-Host MUSS außerhalb von .ticket-view liegen — sie wird
        im Protokoll-Druck ausgeblendet; drin wäre es immer eine leere Seite. */
-    view.append(protoHost);
+    document.body.appendChild(protoHost);
 }
 
 async function changeStatus(ticket, next) {
@@ -1500,7 +1469,7 @@ function deviceRow(device, tickets) {
             }));
             skEditor.append(
               el('div', { class: 'form-row' },
-                el('label', {}, 'Schutzklasse (VDE/DGUV-Prüfung)'), skSel),
+                el('label', {}, 'Schutzklasse (Isolationsprüfung)'), skSel),
               el('div', { class: 'form-row' },
                 el('label', {}, 'Heizleistung in kW (nur bei Heizelementen)'), heatIn),
               skSave);

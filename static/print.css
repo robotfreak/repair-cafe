@@ -128,15 +128,8 @@
   .checkline .done { text-decoration: none; }
   .checkline .ts { color: #444; font-size: 8.5pt; margin-left: auto; }
 
-  /* ---------- Notizlinien ---------- */
-
-  .print-notes { display: block !important; margin-top: 8pt; }
-  .print-notes .notes-title { font-size: 10pt; font-weight: 700; margin: 0 0 4pt; }
-  .print-notes .note-line {
-    border-bottom: 0.5pt solid #999;
-    height: 13pt;
-  }
-
+  /* ---------- Notizlinien — ENTFERNT ab 2026-09-05 ---------- */
+  /* .print-notes Bereich wurde komplett entfernt */
   /* ---------- Waiver / Signatur ---------- */
 
   /* Interaktive Screen-Box (details/summary) im Druck ausblenden —
@@ -315,7 +308,6 @@
 /* ---------- Unsichtbare Druck-Anhänge auf dem Screen ---------- */
 
 .print-checklines,
-.print-notes,
 .print-url,
 .print-equipment,
 .print-protocol-page,

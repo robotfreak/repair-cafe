@@ -28,8 +28,12 @@ def _row_to_dict(row):
 
 @bp.route("/api/dguv/checks", methods=["GET"])
 def all_checks():
-    """Vollständiger Katalog aller drei Schutzklassen (Referenz/Dokumentation)."""
-    return {cls: checks_for(cls) for cls in PROTECTION_CLASSES}
+    """Vollständiger Katalog aller drei Schutzklassen (Referenz/Dokumentation).
+    
+    Seit 2026-09-05: use_vde_conform=False (UNI-T UT-501 Isolationsprüfung,
+    nicht VDE-konform aber für Repair-Café ausreichend).
+    """
+    return {cls: checks_for(cls, use_vde_conform=False) for cls in PROTECTION_CLASSES}
 
 
 # ---------- Prüfgeräte (Messmittel) ----------
@@ -96,7 +100,10 @@ def create_test_device():
 
 @bp.route("/api/tickets/<int:ticket_id>/equipment-test/checks", methods=["GET"])
 def checks_for_ticket(ticket_id):
-    """Checkliste passend zur Schutzklasse des Geräts am Laufzettel."""
+    """Checkliste passend zur Schutzklasse des Geräts am Laufzettel.
+    
+    Seit 2026-09-05: use_vde_conform=False (UNI-T UT-501 statt VDE).
+    """
     conn = get_request_db(flask.current_app)
     if conn.execute("SELECT id FROM tickets WHERE id = ?", (ticket_id,)).fetchone() is None:
         return {"error": "Laufzettel nicht gefunden"}, 404
@@ -106,7 +113,7 @@ def checks_for_ticket(ticket_id):
     return {
         "protection_class": device["schutzklasse"],
         "heating_kw": device["heating_kw"],
-        "checks": checks_for(device["schutzklasse"], device["heating_kw"]),
+        "checks": checks_for(device["schutzklasse"], device["heating_kw"], use_vde_conform=False),
     }
 
 
@@ -160,7 +167,22 @@ def save_test(ticket_id):
             td = test_device
             td_id = td.get("id")
             td_row = None
-            if td_id is not None:
+            # String-ID = virtuelles Gerät (z.B. 'uni-t-ut501'), kein DB-Lookup
+            if td_id is not None and not isinstance(td_id, int):
+                # Virtuelles Gerät (String-ID), kein DB-Lookup nötig
+                snap_name = td.get("name") or str(td_id)
+                if not isinstance(snap_name, str) or not snap_name.strip():
+                    return {"error": "test_device.name ist erforderlich (Messgerät)"}, 400
+                snap_serial = td.get("serial_number")
+                snap_cal = td.get("calibration_until")
+                test_device_snapshot = json.dumps({
+                    "name": snap_name.strip(),
+                    "serial_number": (snap_serial or "").strip() or None,
+                    "calibration_until": (snap_cal or "").strip() or None,
+                }, ensure_ascii=False)
+                test_device_id = None
+            elif td_id is not None:
+                # Echte DB-ID (int)
                 if not isinstance(td_id, int):
                     return {"error": "test_device.id muss eine Zahl sein"}, 400
                 td_row = conn.execute(
@@ -169,18 +191,16 @@ def save_test(ticket_id):
                 if td_row is None:
                     return {"error": "Prüfgerät nicht gefunden"}, 404
                 test_device_id = td_row["id"]
-            # Snapshot immer aus dem Request übernehmen (UI sendet DB-Stand),
-            # so bleibt die Protokollzeile auch ohne DB-Eintrag möglich.
-            snap_name = td.get("name") or (td_row["name"] if td_row else None)
-            if not isinstance(snap_name, str) or not snap_name.strip():
-                return {"error": "test_device.name ist erforderlich (Messgerät)"}, 400
-            snap_serial = td.get("serial_number") or (td_row["serial_number"] if td_row else None)
-            snap_cal = td.get("calibration_until") or (td_row["calibration_until"] if td_row else None)
-            test_device_snapshot = json.dumps({
-                "name": snap_name.strip(),
-                "serial_number": (snap_serial or "").strip() or None,
-                "calibration_until": (snap_cal or "").strip() or None,
-            }, ensure_ascii=False)
+                snap_name = td.get("name") or (td_row["name"] if td_row else None)
+                if not isinstance(snap_name, str) or not snap_name.strip():
+                    return {"error": "test_device.name ist erforderlich (Messgerät)"}, 400
+                snap_serial = td.get("serial_number") or (td_row["serial_number"] if td_row else None)
+                snap_cal = td.get("calibration_until") or (td_row["calibration_until"] if td_row else None)
+                test_device_snapshot = json.dumps({
+                    "name": snap_name.strip(),
+                    "serial_number": (snap_serial or "").strip() or None,
+                    "calibration_until": (snap_cal or "").strip() or None,
+                }, ensure_ascii=False)
         elif isinstance(test_device, str):
             if not test_device.strip():
                 return {"error": "test_device darf nicht leer sein"}, 400
@@ -191,7 +211,8 @@ def save_test(ticket_id):
         else:
             return {"error": "test_device muss ein Objekt oder Text sein"}, 400
 
-    checks = checks_for(device["schutzklasse"], device["heating_kw"])
+    # Seit 2026-09-05: use_vde_conform=False (UNI-T UT-501 statt VDE)
+    checks = checks_for(device["schutzklasse"], device["heating_kw"], use_vde_conform=False)
     measurements = {}
     problems = []
     all_ok = True

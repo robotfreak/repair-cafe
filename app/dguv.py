@@ -7,6 +7,10 @@ damit UI und Speicherung identische Regeln haben.
 Quellen: DIN VDE 0701-0702:2020 (Grenzwerttabellen für Instandsetzung/
 Wiederholungsprüfung ortsveränderlicher Geräte), DGUV Vorschrift 3 § 5
 (Prüffristen-Richtwerte). Werte sind technisch, keine Rechtsberatung.
+
+HINWEIS: Seit 2026-09-05 verwenden wir statt VDE-konformer Prüfung eine
+vereinfachte Isolationsprüfung mit UNI-T UT-501. Dies ist NICHT VDE-konform,
+aber für Repair-Café Zwecke ausreichend (Haftungsausschluss beachten!).
 """
 
 PROTECTION_CLASSES = ("I", "II", "III")
@@ -42,21 +46,27 @@ def _boolean(key, label, hint=None):
             "limit": None, "hint": hint}
 
 
-def checks_for(protection_class, heating_kw=None):
+def checks_for(protection_class, heating_kw=None, use_vde_conform=False):
     """Prüfpflichtige Posten je Schutzklasse als Liste von Dicts.
 
     heating_kw (nur SK I relevant) schärft die Grenzwerte für Geräte mit
     Heizelementen: Isolation 0,3 MΩ statt 1,0 MΩ; Schutzleiterstrom
     1 mA/kW begrenzt auf 10 mA statt pauschal 3,5 mA.
+    
+    use_vde_conform=False: Zeige nur Isolationsprüfung (UNI-T UT-501),
+    keine vollständige VDE-Prüfung. Nicht VDE-konform, aber für
+    Repair-Café ausreichend (Haftungsausschluss beachten!).
     """
     if protection_class not in PROTECTION_CLASSES:
         raise ValueError(f"Unbekannte Schutzklasse: {protection_class!r}")
 
+    # Basis: Besichtigung + Funktion (immer)
     checks = [_boolean(
         "besichtigung",
         "Besichtigung: Gehäuse, Leitung, Stecker, Schalter unbeschädigt")]
 
-    if protection_class == "I":
+    # VDE-konforme Prüfung (alle Messwerte) — derzeit deaktiviert
+    if use_vde_conform and protection_class == "I":
         checks.append(_numeric(
             "schutzleiter", "Schutzleiterwiderstand", "Ω", "max",
             SCHUTZLEITER_MAX_OHM,
@@ -76,16 +86,18 @@ def checks_for(protection_class, heating_kw=None):
             "beruehrungsstrom", "Berührungsstrom (nicht mit PE verbundene Teile)",
             "mA", "max", BERUEHRUNGSSTROM_MAX_MA))
     else:
+        # Vereinfachte Prüfung mit UNI-T UT-501 (Isolation nur)
+        iso = ISOLATION_MIN_MOHM["I_heiz"] if heating_kw and protection_class == "I" else ISOLATION_MIN_MOHM.get(protection_class, 1.0)
         checks.append(_numeric(
-            "isolation", "Isolationswiderstand (500 V DC)", "MΩ", "min",
-            ISOLATION_MIN_MOHM[protection_class]))
-        if protection_class == "II":
-            checks.append(_numeric(
-                "beruehrungsstrom", "Berührungsstrom", "mA", "max",
-                BERUEHRUNGSSTROM_MAX_MA))
+            "isolation_uni_t", "Isolationswiderstand (UNI-T UT-501, 500V)", "MΩ", "min", iso,
+            "⚠️ Nicht VDE-konform — nur für Repair-Café intern"))
+        if protection_class == "I":
+            checks.append(_boolean(
+                "schutzleiter_visuell", "Schutzleiter visuell geprüft",
+                "Stecker, Leitung, Anschluss visuell auf Beschädigung prüfen"))
 
-    checks.append(_boolean("funktion", "Funktionsprüfung nach der Prüfung"))
-    return checks
+        checks.append(_boolean("funktion", "Funktionsprüfung nach der Prüfung"))
+        return checks
 
 
 def evaluate(check, value):
