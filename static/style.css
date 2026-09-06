@@ -720,6 +720,13 @@ a.card:hover, .device-row:hover { border-color: var(--accent); }
   font-size: 0.9rem;
 }
 
+.doc-form-row input[type="file"] {
+  grid-column: 1 / -1;
+  padding: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
 .doc-row {
   display: grid;
   grid-template-columns: 1fr auto auto auto;

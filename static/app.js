@@ -1472,22 +1472,44 @@ function testDeviceRow(device) {
             const docFormTitle = el('input', { type: 'text', placeholder: 'Titel', maxlength: 300 });
             const docFormType = el('select', {},
               ...DOC_TYPES.map(t => el('option', { value: t }, DOC_LABELS[t])));
-            const docFormUrl = el('input', { type: 'url', placeholder: 'URL (http://...)', maxlength: 500 });
+            const docFormFile = el('input', { type: 'file', accept: '.pdf,.jpg,.jpeg,.png,.webp' });
+            const docFormUrl = el('input', { type: 'url', placeholder: 'Oder URL (http://...)', maxlength: 500 });
             const docFormBtn = el('button', { type: 'button', class: 'btn btn-small' }, 'Dokument hinzufügen');
             
             docFormBtn.addEventListener('click', () => withBusy(docFormBtn, async () => {
               if (!docFormTitle.value.trim()) throw new Error('Titel erforderlich');
-              if (!docFormUrl.value.trim()) throw new Error('URL erforderlich');
-              await api('/api/documents', {
-                method: 'POST',
-                body: {
-                  title: docFormTitle.value.trim(),
-                  doc_type: docFormType.value,
-                  device_id: full.id,
-                  url: docFormUrl.value.trim(),
-                },
-              });
+              if (!docFormFile.files[0] && !docFormUrl.value.trim()) throw new Error('Datei oder URL erforderlich');
+              
+              // File Upload oder URL?
+              if (docFormFile.files[0]) {
+                // File Upload mit FormData
+                const formData = new FormData();
+                formData.append('title', docFormTitle.value.trim());
+                formData.append('doc_type', docFormType.value);
+                formData.append('device_id', full.id);
+                formData.append('file', docFormFile.files[0]);
+                
+                const resp = await fetch('/api/documents', {
+                  method: 'POST',
+                  body: formData,
+                });
+                const data = await resp.json();
+                if (!resp.ok) throw new Error(data.error || 'Upload fehlgeschlagen');
+              } else {
+                // URL Eintrag
+                await api('/api/documents', {
+                  method: 'POST',
+                  body: {
+                    title: docFormTitle.value.trim(),
+                    doc_type: docFormType.value,
+                    device_id: full.id,
+                    url: docFormUrl.value.trim(),
+                  },
+                });
+              }
+              
               docFormTitle.value = '';
+              docFormFile.value = '';
               docFormUrl.value = '';
               showToast('Dokument hinzugefügt');
               loadDocs();
