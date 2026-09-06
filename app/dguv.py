@@ -46,7 +46,7 @@ def _boolean(key, label, hint=None):
             "limit": None, "hint": hint}
 
 
-def checks_for(protection_class, heating_kw=None, use_vde_conform=False):
+def checks_for(protection_class, heating_kw=None, use_vde_conform=False, is_school_workshop=False):
     """Prüfpflichtige Posten je Schutzklasse als Liste von Dicts.
 
     heating_kw (nur SK I relevant) schärft die Grenzwerte für Geräte mit
@@ -56,11 +56,21 @@ def checks_for(protection_class, heating_kw=None, use_vde_conform=False):
     use_vde_conform=False: Zeige nur Isolationsprüfung (UNI-T UT-501),
     keine vollständige VDE-Prüfung. Nicht VDE-konform, aber für
     Repair-Café ausreichend (Haftungsausschluss beachten!).
+    
+    is_school_workshop=True: KEINE Isolationsprüfung! (nur 5V-Geräte, SK III)
     """
     if protection_class not in PROTECTION_CLASSES:
         raise ValueError(f"Unbekannte Schutzklasse: {protection_class!r}")
 
-    # Basis: Besichtigung + Funktion (immer)
+    # Schul-Workshop: NUR Besichtigung + Funktion (KEINE Isolationsprüfung!)
+    if is_school_workshop:
+        checks = [
+            _boolean("besichtigung", "Besichtigung: Gehäuse, Leitung, Stecker, Schalter unbeschädigt"),
+            _boolean("funktion", "Funktionsprüfung nach der Reparatur")
+        ]
+        return checks
+
+    # Basis: Besichtigung (immer)
     checks = [_boolean(
         "besichtigung",
         "Besichtigung: Gehäuse, Leitung, Stecker, Schalter unbeschädigt")]
@@ -87,6 +97,12 @@ def checks_for(protection_class, heating_kw=None, use_vde_conform=False):
             "mA", "max", BERUEHRUNGSSTROM_MAX_MA))
     else:
         # Vereinfachte Prüfung mit UNI-T UT-501 (Isolation nur)
+        # NUR für SK I (230V-Geräte)! SK III (5V) braucht KEINE Isolationsprüfung!
+        if protection_class == "III":
+            # SK III: Nur Funktion (Besichtigung schon oben)
+            checks.append(_boolean("funktion", "Funktionsprüfung nach der Reparatur"))
+            return checks
+        
         iso = ISOLATION_MIN_MOHM["I_heiz"] if heating_kw and protection_class == "I" else ISOLATION_MIN_MOHM.get(protection_class, 1.0)
         checks.append(_numeric(
             "isolation_uni_t", "Isolationswiderstand (UNI-T UT-501, 500V)", "MΩ", "min", iso,
