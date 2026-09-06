@@ -7,7 +7,7 @@ import os
 bp = Blueprint('docs', __name__, url_prefix='/docs')
 
 # Vault-Pfad im Submodule
-VAULT_PATH = Path(__file__).parent.parent / 'ki-os' / 'vault'
+VAULT_PATH = Path(__file__).parent.parent / 'vault'
 
 def get_vault_structure():
     """Gibt die Vault-Ordnerstruktur als Dict zurück."""

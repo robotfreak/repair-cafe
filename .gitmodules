@@ -4,3 +4,6 @@
 [submodule "ki-os"]
 	path = ki-os
 	url = git@github.com:robotfreak/ki-os.git
+[submodule "vault"]
+	path = vault
+	url = git@github.com:robotfreak/vault.git
