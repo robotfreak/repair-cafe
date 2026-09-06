@@ -37,6 +37,7 @@ def create_app(data_dir=None):
     from app.search import bp as search_bp
     from app.documents import bp as documents_bp
     from app.equipment import bp as equipment_bp
+    from app.docs_viewer import bp as docs_bp
 
     app.register_blueprint(devices_bp)
     app.register_blueprint(waivers_bp)
@@ -46,6 +47,7 @@ def create_app(data_dir=None):
     app.register_blueprint(search_bp)
     app.register_blueprint(documents_bp)
     app.register_blueprint(equipment_bp)
+    app.register_blueprint(docs_bp)
 
     @app.route("/")
     def index():
