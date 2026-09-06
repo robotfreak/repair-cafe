@@ -1451,7 +1451,6 @@ function testDeviceRow(device) {
             const notesEdit = el('textarea', { rows: 3, maxlength: 2000, placeholder: 'Notizen' }, full.notes || '');
             
             const saveBtn = el('button', { type: 'button', class: 'btn btn-small' }, 'Speichern');
-            const deleteBtn = el('button', { type: 'button', class: 'btn btn-small btn-danger' }, 'Archivieren');
             
             saveBtn.addEventListener('click', () => withBusy(saveBtn, async () => {
               const updated = await api('/api/test-devices/' + full.id, {
@@ -1467,15 +1466,6 @@ function testDeviceRow(device) {
               showToast('Messgerät aktualisiert');
               renderDetail();
             }));
-            
-            deleteBtn.addEventListener('click', () => {
-              if (!confirm('Messgerät "' + full.name + '" wirklich archivieren?')) return;
-              withBusy(deleteBtn, async () => {
-                await api('/api/test-devices/' + full.id, { method: 'DELETE' });
-                showToast('Messgerät archiviert');
-                details.replaceChildren(el('p', { class: 'muted' }, 'Dieses Messgerät wurde archiviert.'));
-              });
-            });
             
             // Dokumente Section
             const docList = el('div', { class: 'mini-list' });
@@ -1514,7 +1504,7 @@ function testDeviceRow(device) {
                 el('div', { class: 'form-row' }, el('label', {}, 'Seriennummer'), snEdit),
                 el('div', { class: 'form-row' }, el('label', {}, 'Kalibrierung bis'), calEdit),
                 el('div', { class: 'form-row' }, el('label', {}, 'Notizen'), notesEdit),
-                el('div', { class: 'form-row' }, saveBtn, deleteBtn)),
+                el('div', { class: 'form-row' }, saveBtn)),
               docSection);
           };
           renderDetail();
