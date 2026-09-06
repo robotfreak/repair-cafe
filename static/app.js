@@ -1425,6 +1425,24 @@ function testDeviceRow(device) {
         details.replaceChildren(el('p', { class: 'muted' }, 'Lade …'));
         try {
           let full = await api('/api/test-devices/' + device.id);
+          
+          async function loadDocs() {
+            const docs = await api('/api/documents?device_id=' + full.id).catch(() => []);
+            docList.replaceChildren(docs.length
+              ? docs.map(d => el('div', { class: 'doc-row' },
+                  el('span', {}, safeText(d.title)),
+                  el('span', { class: 'badge badge-entry-' + d.doc_type }, DOC_LABELS[d.doc_type]),
+                  d.url ? el('a', { href: d.url, target: '_blank', rel: 'noopener' }, 'Öffnen') : null,
+                  el('button', { type: 'button', class: 'btn btn-small btn-danger', onclick: async () => {
+                    if (!confirm('Dokument löschen?')) return;
+                    await api('/api/documents/' + d.id, { method: 'DELETE' });
+                    showToast('Dokument gelöscht');
+                    loadDocs();
+                  }}, 'Löschen')
+                ))
+              : el('p', { class: 'empty-hint' }, 'Keine Dokumente'));
+          }
+          
           const renderDetail = () => {
             // Editor Felder
             const nameEdit = el('input', { type: 'text', value: full.name, maxlength: 200 });
@@ -1466,23 +1484,6 @@ function testDeviceRow(device) {
               ...DOC_TYPES.map(t => el('option', { value: t }, DOC_LABELS[t])));
             const docFormUrl = el('input', { type: 'url', placeholder: 'URL (http://...)', maxlength: 500 });
             const docFormBtn = el('button', { type: 'button', class: 'btn btn-small' }, 'Dokument hinzufügen');
-            
-            async function loadDocs() {
-              const docs = await api('/api/documents?device_id=' + full.id).catch(() => []);
-              docList.replaceChildren(docs.length
-                ? docs.map(d => el('div', { class: 'doc-row' },
-                    el('span', {}, safeText(d.title)),
-                    el('span', { class: 'badge badge-entry-' + d.doc_type }, DOC_LABELS[d.doc_type]),
-                    d.url ? el('a', { href: d.url, target: '_blank', rel: 'noopener' }, 'Öffnen') : null,
-                    el('button', { type: 'button', class: 'btn btn-small btn-danger', onclick: async () => {
-                      if (!confirm('Dokument löschen?')) return;
-                      await api('/api/documents/' + d.id, { method: 'DELETE' });
-                      showToast('Dokument gelöscht');
-                      loadDocs();
-                    }}, 'Löschen')
-                  ))
-                : el('p', { class: 'empty-hint' }, 'Keine Dokumente'));
-            }
             
             docFormBtn.addEventListener('click', () => withBusy(docFormBtn, async () => {
               if (!docFormTitle.value.trim()) throw new Error('Titel erforderlich');
