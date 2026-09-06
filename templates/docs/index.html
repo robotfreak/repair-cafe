@@ -1,0 +1,153 @@
+{# Vault-Dokumentation Übersicht #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>📚 Vault-Dokumentation — Repair-Café</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .docs-container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    .docs-header { margin-bottom: 2rem; }
+    .docs-search { 
+      width: 100%; 
+      padding: 12px; 
+      font-size: 1.1rem; 
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .docs-folder { 
+      margin-bottom: 2rem; 
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .docs-folder-header {
+      background: var(--card);
+      padding: 1rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .docs-folder-header:hover {
+      background: var(--bg);
+    }
+    .docs-folder-content {
+      padding: 1rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 0.5rem;
+    }
+    .doc-card {
+      padding: 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--foreground);
+      transition: all 0.2s;
+    }
+    .doc-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+      transform: translateY(-2px);
+    }
+    .doc-card-title {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--accent);
+    }
+    .doc-card-path {
+      font-size: 0.85rem;
+      color: var(--muted-foreground);
+    }
+    .docs-nav {
+      margin-bottom: 1rem;
+    }
+    .docs-nav a {
+      margin-right: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--foreground);
+    }
+    .docs-nav a.active {
+      background: var(--accent);
+      color: var(--accent-foreground);
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <img src="/static/logo_color.png" alt="berlin Creators – Repair-Café" class="brand-logo">
+    <span class="brand">🔧 Repair-Café</span>
+    <a href="#/board" class="nav-link">Board</a>
+    <a href="#/devices" class="nav-link">Geräte</a>
+    <a href="#/test-devices" class="nav-link">Messgeräte</a>
+    <a href="/docs/" class="nav-link active">Dokumentation</a>
+  </nav>
+
+  <main class="docs-container">
+    <div class="docs-header">
+      <h1>📚 Vault-Dokumentation</h1>
+      <p class="muted">Alle Dokumente aus dem Obsidian Vault — Single Source of Truth</p>
+    </div>
+
+    <input type="search" 
+           class="docs-search" 
+           placeholder="🔍 Dokumente durchsuchen..." 
+           id="docsSearch"
+           aria-label="Dokumente durchsuchen">
+
+    <div class="docs-nav">
+      <a href="/docs/">Alle anzeigen</a>
+      <a href="/docs/10-Projekte">Projekte</a>
+      <a href="/docs/40-Ressourcen">Ressourcen</a>
+      <a href="/docs/60-Architektur">Architektur</a>
+    </div>
+
+    {% for folder_name, files in structure.items() %}
+    <div class="docs-folder" data-folder="{{ folder_name }}">
+      <div class="docs-folder-header" onclick="this.nextElementElement.hidden = !this.nextElementElement.hidden">
+        <span>📁 {{ folder_name }}</span>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="docs-folder-content">
+        {% for file in files %}
+        <a href="/docs/{{ file.path }}" class="doc-card">
+          <div class="doc-card-title">📄 {{ file.title }}</div>
+          <div class="doc-card-path">{{ file.path }}</div>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </main>
+
+  <script>
+    // Suche
+    const searchInput = document.getElementById('docsSearch');
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      document.querySelectorAll('.doc-card').forEach(card => {
+        const title = card.querySelector('.doc-card-title').textContent.toLowerCase();
+        const path = card.querySelector('.doc-card-path').textContent.toLowerCase();
+        card.style.display = (title.includes(query) || path.includes(query)) ? '' : 'none';
+      });
+    });
+
+    // Ordner aufklappen
+    document.querySelectorAll('.docs-folder-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const content = header.nextElementSibling;
+        content.hidden = !content.hidden;
+        header.querySelector('.chevron').textContent = content.hidden ? '▶' : '▼';
+      });
+    });
+  </script>
+</body>
+</html>

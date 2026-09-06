@@ -1,0 +1,112 @@
+{# Einzelnes Dokument anzeigen #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ title }} — Repair-Café</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .doc-viewer { 
+      max-width: 900px; 
+      margin: 0 auto; 
+      padding: 2rem;
+      background: var(--card);
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgb(0 0 0 / 0.1);
+    }
+    .doc-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid var(--border);
+    }
+    .doc-title {
+      font-size: 2rem;
+      margin: 0 0 0.5rem 0;
+      color: var(--accent);
+    }
+    .doc-meta {
+      color: var(--muted-foreground);
+      font-size: 0.9rem;
+    }
+    .doc-content {
+      line-height: 1.6;
+    }
+    .doc-content h1 { font-size: 1.8rem; margin-top: 2rem; }
+    .doc-content h2 { font-size: 1.5rem; margin-top: 1.5rem; }
+    .doc-content h3 { font-size: 1.3rem; margin-top: 1.2rem; }
+    .doc-content code {
+      background: var(--bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Consolas', monospace;
+    }
+    .doc-content pre {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    .doc-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    .doc-content th, .doc-content td {
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      text-align: left;
+    }
+    .doc-content th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .doc-content blockquote {
+      border-left: 4px solid var(--accent);
+      margin: 1rem 0;
+      padding-left: 1rem;
+      color: var(--muted-foreground);
+    }
+    .doc-back-link {
+      display: inline-block;
+      margin-bottom: 1rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--foreground);
+    }
+    .doc-back-link:hover {
+      background: var(--accent);
+      color: var(--accent-foreground);
+    }
+    @media print {
+      .doc-back-link, .topnav { display: none; }
+      .doc-viewer { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <img src="/static/logo_color.png" alt="berlin Creators – Repair-Café" class="brand-logo">
+    <span class="brand">🔧 Repair-Café</span>
+    <a href="#/board" class="nav-link">Board</a>
+    <a href="#/devices" class="nav-link">Geräte</a>
+    <a href="#/test-devices" class="nav-link">Messgeräte</a>
+    <a href="/docs/" class="nav-link active">Dokumentation</a>
+  </nav>
+
+  <main class="doc-viewer">
+    <a href="/docs/" class="doc-back-link">← Zurück zur Übersicht</a>
+    
+    <div class="doc-header">
+      <h1 class="doc-title">{{ title }}</h1>
+      <div class="doc-meta">📁 {{ filename }}</div>
+    </div>
+
+    <div class="doc-content">
+      {{ content|safe }}
+    </div>
+  </main>
+</body>
+</html>
