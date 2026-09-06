@@ -1,3 +1,6 @@
 [submodule "school"]
 	path = school
 	url = git@github.com:robotfreak/repair-cafe-school.git
+[submodule "ki-os"]
+	path = ki-os
+	url = git@github.com:robotfreak/ki-os.git
