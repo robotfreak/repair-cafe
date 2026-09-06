@@ -15,9 +15,15 @@ def get_vault_structure():
     
     # Hauptordner definieren (in Reihenfolge)
     folder_order = [
-        '00-Inbox', '10-Projekte', '20-Bereiche', '30-Journal',
-        '40-Ressourcen', '50-Dashboard', '60-Architektur',
-        '90-Templates', '99-Assets'
+        '20-Bereiche',  # ← START-ORDNER!
+        '10-Projekte',
+        '00-Inbox',
+        '30-Journal',
+        '40-Ressourcen',
+        '50-Dashboard',
+        '60-Architektur',
+        '90-Templates',
+        '99-Assets'
     ]
     
     for folder_name in folder_order:
