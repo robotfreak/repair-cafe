@@ -14,6 +14,7 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 | **4** | Multimeter Digital (Koffer) | Universal-Multimeter | Durchgang, Spannung, Widerstand |
 | **5** | Lötkolben 25W (Koffer) | Werkzeug | Elektronik-Reparaturen |
 | **6** | Werkzeug-Set (Koffer) | Werkzeug-Set | Schraubendreher, Zangen, etc. |
+| **—** | Tablet (Fully Browser) | Anzeige-Gerät | Digitale Dokumentation, Dark-Mode |
 
 ---
 
