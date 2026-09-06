@@ -1,6 +1,35 @@
 # UNI-T UT-501 Isolationsprüfgerät — Bedienanleitung
 
+**⚠️ WICHTIG: NUR für Leitungen/Kabel — NICHT für Geräte!**
+
 **Einsatz im Repair-Café** — Seit 2026-09-05
+
+---
+
+## 🚨 KRITISCHER WARNHINWEIS
+
+```
+⚠️  ACHTUNG: UT-501 ist NUR für lose Leitungen/Kabel!
+
+❌ NICHT für fertige Geräte verwenden!
+   - Weder Schutzklasse I (230V-Geräte)
+   - Weder Schutzklasse II (schutzisolierte Geräte)
+   - Weder Schutzklasse III (Kleinspannung, 5V-Geräte)
+
+✅ NUR für isolierte Leitungen/Kabel:
+   - Isolationswiderstand zwischen Adern messen
+   - NICHT im Repair-Café für Geräte-Reparaturen!
+
+✅ Für ALLE Geräte-Reparaturen:
+   - NUR Multimeter verwenden (Durchgang, Spannung)
+   - Besichtigung + Funktionsprüfung
+   - KEINE Isolationsprüfung!
+```
+
+**Hintergrund:** Der UT-501 mit 500V DC ist ausschließlich für die Isolationsprüfung von elektrischen Leitungen und Kabeln konzipiert. Die Prüfung an fertigen Geräten kann:
+- ❌ Elektronikbauteile zerstören (500V!)
+- ❌ Falsche Messwerte liefern (Geräte-Parallelschaltungen)
+- ❌ Sicherheitsrisiken schaffen (Kondensatoren, Varistoren)
 
 ---
 
@@ -68,128 +97,152 @@ ROTE Leitung → 500V (rote Buchse)
 
 ---
 
-## 📏 MESSDURCHFÜHRUNG
+## 🔧 MESSDURCHFÜHRUNG
 
-### **Schutzklasse I (Geräte mit Schutzleiter):**
+### **⚠️ NUR für Leitungen/Kabel!**
 
-**Messpunkt 1: L/PE (Außenleiter gegen Schutzleiter)**
-
-```
-1. ROTE Messspitze → L-Kontakt im Stecker (links bei Schuko)
-2. SCHWARZE Messspitze → PE-Kontakt (Mitte, Schutzleiter)
-3. MESSEN-Taste drücken (oder automatisch bei 500V-Stellung)
-4. Wert ablesen und notieren
-```
-
-**Messpunkt 2: N/PE (Neutralleiter gegen Schutzleiter)**
+**WICHTIG:** Diese Anleitung beschreibt die Messung an **isolierten Leitungen**, NICHT an fertigen Geräten!
 
 ```
-1. ROTE Messspitze → N-Kontakt im Stecker (rechts bei Schuko)
-2. SCHWARZE Messspitze → PE-Kontakt (Mitte)
-3. Messen und notieren
+✅ RICHTIG: Isolationswiderstand zwischen zwei Adern eines Kabels
+❌ FALSCH: Isolationswiderstand an einem fertigen Gerät (Toaster, Föhn, etc.)
 ```
 
-### **Schutzklasse II (Doppelisolierung, ohne Schutzleiter):**
-
-**Messpunkt: L+N gegen berührbare Metallteile**
+### **Messung an einem Kabel (2-adrig):**
 
 ```
-1. ROTE Messspitze → L-Kontakt im Stecker
-2. SCHWARZE Messspitze → berührbare Metallteile am Gerät
-   (Gehäuse, Schrauben, Griffe, etc.)
-3. Messen und notieren
+1. BEIDE Enden des Kabels freilegen (nicht verbunden!)
+2. ROTE Messspitze → Ader 1 (ein Ende)
+3. SCHWARZE Messspitze → Ader 2 (gleiches Ende)
+4. MESSEN-Taste drücken
+5. Wert ablesen (sollte > 100 MΩ sein für gute Isolierung)
 ```
 
-**Alternative:** L und N im Stecker überbrücken, dann gegen Gehäuse messen
-
-### **Schutzklasse III (Schutzkleinspannung, z.B. 12V/24V Geräte):**
+### **Messung an einem Kabel (mehradrig):**
 
 ```
-1. Messung zwischen Eingangs- und Ausgangsseite
-2. Oder gemäß Herstellerangaben
+Jede Ader gegen jede andere Ader prüfen:
+- Ader 1 gegen Ader 2
+- Ader 1 gegen Ader 3
+- Ader 2 gegen Ader 3
+- etc.
+
+Alle Werte sollten > 100 MΩ sein.
 ```
 
 ---
 
-## 📊 MESSWERTE INTERPRETIEREN
+### **❌ NICHT für Geräte-Reparaturen!**
 
-### **Grenzwerte für Repair-Café (UNI-T UT-501, 500V):**
-
-| Schutzklasse | Mindestwert | Bewertung |
-|--------------|-------------|-----------|
-| **SK I** (ohne Heizung) | ≥ 1.0 MΩ | ✅ OK |
-| **SK I** (mit Heizung) | ≥ 0.3 MΩ | ✅ OK |
-| **SK II** (Doppelisolierung) | ≥ 2.0 MΩ | ✅ OK |
-| **SK III** (Schutzkleinspannung) | ≥ 0.25 MΩ | ✅ OK |
-
-### **Bewertung:**
+**Für ALLE Geräte im Repair-Café gilt:**
 
 ```
-≥ Grenzwert     →  ✅ BESTANDEN (Isolation in Ordnung)
-< Grenzwert     →  ❌ NICHT BESTANDEN (Isolation defekt)
-"OL" (Over Limit) → ✅ SEHR GUT (Isolation > 2000 MΩ)
-0.00 MΩ         →  ❌ KURZSCHLUSS (sofort aussondern!)
+1. Besichtigung (Gehäuse, Kabel, Stecker)
+2. Multimeter-Prüfung (Durchgang, Spannung)
+3. Funktionsprüfung (nach Reparatur)
+
+KEINE Isolationsprüfung mit UT-501!
 ```
+
+**Multimeter verwenden für:**
+- ✅ Durchgangsprüfung (Kabel defekt?)
+- ✅ Spannung messen (Dynamo: 5-12V DC)
+- ✅ Widerstand messen (LED, Schalter)
+
+**Alternative:** L und N im Stecker überbrücken, dann gegen Gehäuse messen
+
+---
+
+## ❌ NICHT FÜR GERÄTE!
+
+**Diese Anleitung war ursprünglich für Geräte-Reparaturen gedacht — das ist FALSCH!**
+
+### **RICHTIGER WORKFLOW für Geräte im Repair-Café:**
+
+```
+1. Besichtigung (Gehäuse, Kabel, Stecker, Schalter)
+2. Multimeter-Prüfung:
+   - Durchgang (Kabel OK?)
+   - Spannung (Dynamo: 5-12V DC)
+   - Widerstand (LED, Schalter)
+3. Reparatur durchführen
+4. Funktionsprüfung (gerät funktioniert?)
+
+❌ KEINE Isolationsprüfung mit UT-501!
+```
+
+### **Wann UT-501 verwenden?**
+
+```
+✅ NUR für isolierte Leitungen/Kabel:
+   - Selbst gebaute Verlängerungskabel
+   - Verlegte Leitungen (Isolationszustand)
+   - Kabelbäume (Isolation zwischen Adern)
+
+❌ NICHT für fertige Geräte:
+   - Toaster, Föhn, Kaffeemaschine
+   - Bohrmaschine, Haartrockner
+   - Netzteile, Lampen
+   - Dynamo-Taschenlampen (5V!)
+```
+
+---
+
+## 📊 GRENZWERTE (NUR für Leitungen/Kabel!)
+
+### **Für isolierte Leitungen:**
+
+| Kabeltyp | Mindest-Isolationswiderstand | Bewertung |
+|----------|------------------------------|-----------|
+| **Neue Leitung** | > 1000 MΩ | ✅ Sehr gut |
+| **Gebrauchte Leitung** | > 100 MΩ | ✅ Gut |
+| **Alte Leitung** | 10–100 MΩ | ⚠️ Prüfen (noch OK) |
+| **Defekte Leitung** | < 10 MΩ | ❌ Isolierung defekt! |
+
+### **❌ KEINE Grenzwerte für Geräte!**
+
+**Für Geräte-Reparaturen gibt es KEINE Grenzwerte weil:**
+- ❌ **KEINE Isolationsprüfung** an Geräten!
+- ✅ **NUR Multimeter** (Durchgang, Spannung)
+- ✅ **Besichtigung + Funktionsprüfung**
 
 ---
 
 ## 🛠️ PRAKTISCHE BEISPIELE
 
-### **Beispiel 1: Toaster (SK I, mit Heizung)**
+### **✅ RICHTIG: Kabel-Prüfung**
+
+**Beispiel 1: Selbst gebautes Verlängerungskabel**
+
+```
+Kabel: H05VV-F 3G1.5 (selbst konfektioniert)
+Länge: 5m
+
+Messung (je Ader-Kombination):
+  L1 gegen L2:  > 1000 MΩ  ✅
+  L1 gegen PE:  > 1000 MΩ  ✅
+  L2 gegen PE:  > 1000 MΩ  ✅
+
+Grenzwert: > 100 MΩ (gebrauchte Leitung)
+Urteil: BESTANDEN ✅ (sehr gute Isolierung)
+```
+
+### **❌ FALSCH: Geräte-Prüfung (NICHT machen!)**
+
+**Beispiel 2: Toaster (falsch geprüft!)**
 
 ```
 Gerät: Toaster, 1000W
 Schutzklasse: I (Schukostecker)
-Heizleistung: 1.0 kW
 
-Messung:
-  L/PE: 150 MΩ  ✅
-  N/PE: 145 MΩ  ✅
+❌ FALSCH: UT-501 am Gerät verwenden!
+   → 500V kann Heizwendel-Elektronik zerstören
+   → Falsche Werte durch Parallelschaltungen
 
-Grenzwert: ≥ 0.3 MΩ (mit Heizung)
-Urteil: BESTANDEN ✅
-```
-
-### **Beispiel 2: Bohrmaschine (SK I, Motor)**
-
-```
-Gerät: Handbohrmaschine, 500W
-Schutzklasse: I (Schukostecker)
-
-Messung:
-  L/PE: 0.8 MΩ  ✅
-  N/PE: 0.7 MΩ  ✅
-
-Grenzwert: ≥ 1.0 MΩ (ohne Heizung)
-Urteil: BESTANDEN ✅ (knapp, aber OK)
-```
-
-### **Beispiel 3: Haartrockner (SK II)**
-
-```
-Gerät: Haartrockner, 1800W
-Schutzklasse: II (Doppelisolierung, kein Schutzleiter)
-
-Messung:
-  L+N gegen Gehäuse: 250 MΩ  ✅
-
-Grenzwert: ≥ 2.0 MΩ
-Urteil: BESTANDEN ✅
-```
-
-### **Beispiel 4: Defektes Netzteil (SK I)**
-
-```
-Gerät: Laptop-Netzteil
-Schutzklasse: I (Schukostecker)
-
-Messung:
-  L/PE: 0.05 MΩ  ❌
-  N/PE: 0.04 MΩ  ❌
-
-Grenzwert: ≥ 1.0 MΩ
-Urteil: NICHT BESTANDEN ❌
-→ Isolation defekt, von Reparatur abraten!
+✅ RICHTIG: Multimeter verwenden
+   - Durchgang: Heizwendel OK?
+   - Besichtigung: Kabel, Stecker, Gehäuse
+   - Funktionsprüfung: Wird er heiß?
 ```
 
 ---
@@ -202,16 +255,15 @@ Urteil: NICHT BESTANDEN ❌
 ❌ Feuchte Anschlüsse → Trocknen, neu messen
 ❌ Schmutzige Kontakte → Reinigen, neu messen
 ❌ Kondensatoren noch geladen → Entladen, neu messen
-❌ Falsche Schutzklasse → Geräte-Typenschild prüfen
+❌ Falsche Anwendung → UT-501 NUR für Kabel, NICHT für Geräte!
 ❌ Messleitungen vertauscht → Korrekt anschließen
-❌ Gerät nicht ausgeschaltet → Alle Schalter EIN stellen
 ```
 
 ### **Typische Probleme:**
 
 | Symptom | Ursache | Lösung |
 |---------|---------|--------|
-| **0.00 MΩ** | Kurzschluss | Gerät nicht sicher! |
+| **0.00 MΩ** | Kurzschluss | Leitung defekt! |
 | **"OL"** | Sehr gute Isolation | ✅ Bestanden |
 | **Wert steigt langsam** | Kondensator lädt | Warten bis stabil |
 | **Wert schwankt** | Feuchte/Wackelkontakt | Trocknen, festhalten |
@@ -220,22 +272,28 @@ Urteil: NICHT BESTANDEN ❌
 
 ## 📝 DOKUMENTATION IM REPAIR-CAFÉ
 
-### **Im Laufzettel-System:**
-
-1. **Isolationswiderstand eingeben** (z.B. `150` für 150 MΩ)
-2. **Einheit:** MΩ (Megaohm)
-3. **System bewertet automatisch:**
-   - ≥ Grenzwert → ✅ BESTANDEN
-   - < Grenzwert → ❌ NICHT BESTANDEN
-
-### **Protokoll zeigt:**
+### **Wann dokumentieren?**
 
 ```
-⚡ Isolationsprüfung mit UNI-T UT-501 (nicht VDE-konform)
+✅ NUR wenn: Isolationsprüfung an Kabeln durchgeführt
+   - Selbst konfektionierte Kabel
+   - Verlegte Leitungen geprüft
 
-Messgröße                          Grenzwert    Messwert    Bewertung
-─────────────────────────────────────────────────────────────────────
-Isolationswiderstand (UNI-T UT-501, 500V)   ≥ 1.0 MΩ    150 MΩ      ✓
+❌ NICHT wenn: Geräte-Reparatur
+   - Normale Reparatur (Besichtigung + Funktion)
+   - Multimeter-Prüfung (Durchgang, Spannung)
+```
+
+### **Multimeter-Prüfung dokumentieren:**
+
+```
+Im Laufzettel:
+□ Besichtigung: OK
+□ Durchgang: Kabel OK
+□ Spannung: 12V (Dynamo)
+□ Funktion: LED leuchtet
+
+✅ FERTIG! (KEINE Isolationsprüfung!)
 ```
 
 ---
