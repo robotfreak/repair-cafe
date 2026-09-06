@@ -1339,7 +1339,8 @@ async function withBusySubmit(form, fn, event, errBox) {
 /* ====================== MESSGERÄTE ====================== */
 
 async function renderTestDevices() {
-  const devices = await api('/api/test-devices');
+  const response = await api('/api/test-devices');
+  const devices = response.test_devices || [];
   const errBox = fieldErrorBox();
 
   const searchInput = el('input', {
