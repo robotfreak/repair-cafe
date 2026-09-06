@@ -112,6 +112,75 @@ def get_test_device(device_id):
     return dict(row)
 
 
+@bp.route("/api/test-devices/<int:device_id>", methods=["PATCH"])
+def update_test_device(device_id):
+    """Messgerät aktualisieren."""
+    conn = get_request_db(flask.current_app)
+    row = conn.execute(
+        "SELECT id FROM test_devices WHERE id = ? AND archived = 0",
+        (device_id,),
+    ).fetchone()
+    if row is None:
+        return {"error": "Messgerät nicht gefunden"}, 404
+    
+    payload = flask.request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return {"error": "JSON-Body erforderlich"}, 400
+    
+    updates = {}
+    if "name" in payload:
+        name = payload["name"]
+        if not isinstance(name, str) or not name.strip():
+            return {"error": "Name muss Text sein"}, 400
+        updates["name"] = name.strip()
+    if "serial_number" in payload:
+        serial = payload["serial_number"]
+        if serial is not None and not isinstance(serial, str):
+            return {"error": "serial_number muss Text sein"}, 400
+        updates["serial_number"] = (serial or "").strip() or None
+    if "calibration_until" in payload:
+        cal = payload["calibration_until"]
+        if cal is not None and not isinstance(cal, str):
+            return {"error": "calibration_until muss Text sein"}, 400
+        updates["calibration_until"] = (cal or "").strip() or None
+    if "notes" in payload:
+        notes = payload["notes"]
+        if notes is not None and not isinstance(notes, str):
+            return {"error": "notes muss Text sein"}, 400
+        updates["notes"] = (notes or "").strip() or None
+    
+    if not updates:
+        return {"error": "Keine Änderungen"}, 400
+    
+    set_clause = ", ".join(f"{k} = ?" for k in updates.keys())
+    values = list(updates.values()) + [device_id]
+    conn.execute(f"UPDATE test_devices SET {set_clause} WHERE id = ?", values)
+    conn.commit()
+    
+    updated = conn.execute(
+        "SELECT id, name, serial_number, calibration_until, notes, archived"
+        " FROM test_devices WHERE id = ?",
+        (device_id,),
+    ).fetchone()
+    return dict(updated)
+
+
+@bp.route("/api/test-devices/<int:device_id>", methods=["DELETE"])
+def archive_test_device(device_id):
+    """Messgerät archivieren (soft delete)."""
+    conn = get_request_db(flask.current_app)
+    row = conn.execute(
+        "SELECT id FROM test_devices WHERE id = ? AND archived = 0",
+        (device_id,),
+    ).fetchone()
+    if row is None:
+        return {"error": "Messgerät nicht gefunden"}, 404
+    
+    conn.execute("UPDATE test_devices SET archived = 1 WHERE id = ?", (device_id,))
+    conn.commit()
+    return {"success": True}
+
+
 @bp.route("/api/tickets/<int:ticket_id>/equipment-test/checks", methods=["GET"])
 def checks_for_ticket(ticket_id):
     """Checkliste passend zur Schutzklasse des Geräts am Laufzettel.
