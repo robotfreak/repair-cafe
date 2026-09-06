@@ -1,0 +1,3 @@
+[submodule "school"]
+	path = school
+	url = git@github.com:robotfreak/repair-cafe-school.git

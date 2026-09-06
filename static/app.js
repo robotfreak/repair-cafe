@@ -199,6 +199,7 @@ const routes = [
   { pattern: /^#\/search$/, handler: renderSearch },
   { pattern: /^#\/documents$/, handler: renderDocuments },
   { pattern: /^#\/devices$/, handler: renderDevices },
+  { pattern: /^#\/test-devices$/, handler: renderTestDevices },
 ];
 
 function parseRoute() {
@@ -1333,6 +1334,118 @@ async function withBusySubmit(form, fn, event, errBox) {
   } finally {
     if (submit) submit.disabled = false;
   }
+}
+
+/* ====================== MESSGERÄTE ====================== */
+
+async function renderTestDevices() {
+  const devices = await api('/api/test-devices');
+  const errBox = fieldErrorBox();
+
+  const searchInput = el('input', {
+    type: 'search', placeholder: 'Messgeräte durchsuchen …', 'aria-label': 'Messgeräte suchen',
+  });
+  const searchBtn = el('button', { type: 'button', class: 'btn' }, 'Suchen');
+  const list = el('div', { class: 'device-list' });
+
+  async function drawList(items) {
+    if (!items.length) { list.replaceChildren(emptyHint('Keine Messgeräte gefunden')); return; }
+    list.replaceChildren(...items.map((d) => testDeviceRow(d)));
+  }
+
+  async function runSearch() {
+    const q = searchInput.value.trim();
+    const items = q ? await api('/api/test-devices?q=' + encodeURIComponent(q)) : await api('/api/test-devices');
+    await drawList(items);
+  }
+  searchBtn.addEventListener('click', () => withBusy(searchBtn, runSearch));
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); withBusy(searchBtn, runSearch); }
+  });
+
+  /* Anlegen */
+  const nameInput = el('input', { type: 'text', placeholder: 'Name *', maxlength: 200 });
+  const snInput = el('input', { type: 'text', placeholder: 'Seriennummer', maxlength: 200 });
+  const calInput = el('input', { type: 'date', placeholder: 'Kalibrierung bis' });
+  const notesInput = el('textarea', { placeholder: 'Notizen (z.B. "nicht VDE-konform")', rows: 3, maxlength: 2000 });
+  const createForm = el('form', { class: 'device-create' },
+    nameInput, snInput, calInput, notesInput,
+    el('button', { type: 'submit', class: 'btn btn-primary' }, 'Messgerät anlegen'));
+  createForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errBox.hidden = true;
+    const btn = createForm.querySelector('[type="submit"]');
+    btn.disabled = true;
+    try {
+      const device = await api('/api/test-devices', {
+        method: 'POST',
+        body: {
+          name: nameInput.value.trim(),
+          serial_number: snInput.value.trim() || null,
+          calibration_until: calInput.value || null,
+          notes: notesInput.value.trim() || null,
+        },
+      });
+      nameInput.value = snInput.value = notesInput.value = '';
+      calInput.value = '';
+      showToast('Messgerät "' + device.name + '" angelegt');
+      await drawList(await api('/api/test-devices'));
+    } catch (err) {
+      showFieldError(errBox, err);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  view.replaceChildren(
+    el('section', { class: 'panel' },
+      el('h1', {}, 'Messgeräte'),
+      el('p', { class: 'muted' }, 'Hier kannst du Messgeräte und Werkzeug verwalten die für Prüfungen verwendet werden.'),
+      createForm,
+      errBox,
+      el('div', { class: 'search-row' }, searchInput, searchBtn),
+      list));
+
+  await drawList(devices).catch((err) => {
+    list.replaceChildren(emptyHint('Messgeräte konnten nicht geladen werden: ' + err.message));
+  });
+}
+
+function testDeviceRow(device) {
+  const details = el('div', { class: 'device-details', hidden: true });
+  const head = el('button', {
+    type: 'button', class: 'device-row',
+    onclick: async () => {
+      const open = !details.hidden;
+      details.hidden = open;
+      head.classList.toggle('open', !open);
+      if (!details.hidden && !details.dataset.loaded) {
+        details.dataset.loaded = '1';
+        details.replaceChildren(el('p', { class: 'muted' }, 'Lade …'));
+        try {
+          let full = await api('/api/test-devices/' + device.id);
+          const renderDetail = () => {
+            const infoRows = [
+              ['Name', full.name],
+              ['Seriennummer', full.serial_number],
+              ['Kalibrierung bis', full.calibration_until ? fmtDate(full.calibration_until) : 'nicht kalibriert'],
+              ['Notizen', full.notes],
+            ].filter(([, v]) => v);
+            details.replaceChildren(
+              el('div', { class: 'device-meta' }, infoGrid(infoRows)),
+              el('p', { class: 'muted' }, 'Dieses Messgerät kann in Prüfungen verwendet werden.'));
+          };
+          renderDetail();
+        } catch (err) {
+          details.replaceChildren(errorBox(err.message));
+        }
+      }
+    },
+  }, el('span', { class: 'device-name' }, safeText(device.name)),
+     el('span', { class: 'device-meta-short' }, safeText(device.serial_number || '')),
+     el('span', { class: 'device-meta-short' }, device.calibration_until ? 'kal. bis ' + fmtDate(device.calibration_until) : 'nicht kalibriert'));
+
+  return el('div', { class: 'device-item' }, head, details);
 }
 
 /* ====================== GERÄTE ====================== */
