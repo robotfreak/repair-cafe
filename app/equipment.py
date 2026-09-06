@@ -98,6 +98,20 @@ def create_test_device():
     return dict(row), 201
 
 
+@bp.route("/api/test-devices/<int:device_id>", methods=["GET"])
+def get_test_device(device_id):
+    """Einzelnes Messgerät nach ID abrufen."""
+    conn = get_request_db(flask.current_app)
+    row = conn.execute(
+        "SELECT id, name, serial_number, calibration_until, notes, archived"
+        " FROM test_devices WHERE id = ? AND archived = 0",
+        (device_id,),
+    ).fetchone()
+    if row is None:
+        return {"error": "Messgerät nicht gefunden"}, 404
+    return dict(row)
+
+
 @bp.route("/api/tickets/<int:ticket_id>/equipment-test/checks", methods=["GET"])
 def checks_for_ticket(ticket_id):
     """Checkliste passend zur Schutzklasse des Geräts am Laufzettel.
