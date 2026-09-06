@@ -1426,17 +1426,98 @@ function testDeviceRow(device) {
         try {
           let full = await api('/api/test-devices/' + device.id);
           const renderDetail = () => {
-            const infoRows = [
-              ['Name', full.name],
-              ['Seriennummer', full.serial_number],
-              ['Kalibrierung bis', full.calibration_until ? fmtDate(full.calibration_until) : 'nicht kalibriert'],
-              ['Notizen', full.notes],
-            ].filter(([, v]) => v);
+            // Editor Felder
+            const nameEdit = el('input', { type: 'text', value: full.name, maxlength: 200 });
+            const snEdit = el('input', { type: 'text', value: full.serial_number || '', placeholder: 'Seriennummer', maxlength: 200 });
+            const calEdit = el('input', { type: 'date', value: full.calibration_until || '' });
+            const notesEdit = el('textarea', { rows: 3, maxlength: 2000, placeholder: 'Notizen' }, full.notes || '');
+            
+            const saveBtn = el('button', { type: 'button', class: 'btn btn-small' }, 'Speichern');
+            const deleteBtn = el('button', { type: 'button', class: 'btn btn-small btn-danger' }, 'Archivieren');
+            
+            saveBtn.addEventListener('click', () => withBusy(saveBtn, async () => {
+              const updated = await api('/api/test-devices/' + full.id, {
+                method: 'PATCH',
+                body: {
+                  name: nameEdit.value.trim() || full.name,
+                  serial_number: snEdit.value.trim() || null,
+                  calibration_until: calEdit.value || null,
+                  notes: notesEdit.value.trim() || null,
+                },
+              });
+              full = updated;
+              showToast('Messgerät aktualisiert');
+              renderDetail();
+            }));
+            
+            deleteBtn.addEventListener('click', () => {
+              if (!confirm('Messgerät "' + full.name + '" wirklich archivieren?')) return;
+              withBusy(deleteBtn, async () => {
+                await api('/api/test-devices/' + full.id, { method: 'DELETE' });
+                showToast('Messgerät archiviert');
+                details.replaceChildren(el('p', { class: 'muted' }, 'Dieses Messgerät wurde archiviert.'));
+              });
+            });
+            
+            // Dokumente Section
+            const docList = el('div', { class: 'mini-list' });
+            const docFormTitle = el('input', { type: 'text', placeholder: 'Titel', maxlength: 300 });
+            const docFormType = el('select', {},
+              ...DOC_TYPES.map(t => el('option', { value: t }, DOC_LABELS[t])));
+            const docFormUrl = el('input', { type: 'url', placeholder: 'URL (http://...)', maxlength: 500 });
+            const docFormBtn = el('button', { type: 'button', class: 'btn btn-small' }, 'Dokument hinzufügen');
+            
+            async function loadDocs() {
+              const docs = await api('/api/documents?device_id=' + full.id).catch(() => []);
+              docList.replaceChildren(docs.length
+                ? docs.map(d => el('div', { class: 'doc-row' },
+                    el('span', {}, safeText(d.title)),
+                    el('span', { class: 'badge badge-entry-' + d.doc_type }, DOC_LABELS[d.doc_type]),
+                    d.url ? el('a', { href: d.url, target: '_blank', rel: 'noopener' }, 'Öffnen') : null,
+                    el('button', { type: 'button', class: 'btn btn-small btn-danger', onclick: async () => {
+                      if (!confirm('Dokument löschen?')) return;
+                      await api('/api/documents/' + d.id, { method: 'DELETE' });
+                      showToast('Dokument gelöscht');
+                      loadDocs();
+                    }}, 'Löschen')
+                  ))
+                : el('p', { class: 'empty-hint' }, 'Keine Dokumente'));
+            }
+            
+            docFormBtn.addEventListener('click', () => withBusy(docFormBtn, async () => {
+              if (!docFormTitle.value.trim()) throw new Error('Titel erforderlich');
+              if (!docFormUrl.value.trim()) throw new Error('URL erforderlich');
+              await api('/api/documents', {
+                method: 'POST',
+                body: {
+                  title: docFormTitle.value.trim(),
+                  doc_type: docFormType.value,
+                  device_id: full.id,
+                  url: docFormUrl.value.trim(),
+                },
+              });
+              docFormTitle.value = '';
+              docFormUrl.value = '';
+              showToast('Dokument hinzugefügt');
+              loadDocs();
+            }));
+            
+            const docSection = el('div', { class: 'device-docs' },
+              el('h4', {}, 'Dokumente & Handbücher'),
+              el('div', { class: 'doc-form-row' }, docFormTitle, docFormType, docFormUrl, docFormBtn),
+              docList);
+            
             details.replaceChildren(
-              el('div', { class: 'device-meta' }, infoGrid(infoRows)),
-              el('p', { class: 'muted' }, 'Dieses Messgerät kann in Prüfungen verwendet werden.'));
+              el('div', { class: 'device-meta device-edit' },
+                el('div', { class: 'form-row' }, el('label', {}, 'Name'), nameEdit),
+                el('div', { class: 'form-row' }, el('label', {}, 'Seriennummer'), snEdit),
+                el('div', { class: 'form-row' }, el('label', {}, 'Kalibrierung bis'), calEdit),
+                el('div', { class: 'form-row' }, el('label', {}, 'Notizen'), notesEdit),
+                el('div', { class: 'form-row' }, saveBtn, deleteBtn)),
+              docSection);
           };
           renderDetail();
+          loadDocs();
         } catch (err) {
           details.replaceChildren(errorBox(err.message));
         }
