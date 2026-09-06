@@ -661,6 +661,78 @@ a.card:hover, .device-row:hover { border-color: var(--accent); }
   border-top: 1px dashed var(--border);
   background: var(--bg);
 }
+
+.device-edit .form-row {
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.device-edit label {
+  font-weight: 600;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.device-edit input[type="text"],
+.device-edit input[type="date"],
+.device-edit textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.device-edit textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.device-docs {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.device-docs h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  color: var(--foreground);
+}
+
+.doc-form-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 1fr auto;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+
+.doc-form-row input[type="text"],
+.doc-form-row input[type="url"],
+.doc-form-row select {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.doc-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-row:last-child {
+  border-bottom: none;
+}
+
 .device-meta { margin-bottom: 0.6rem; }
 .info-grid {
   display: grid;
