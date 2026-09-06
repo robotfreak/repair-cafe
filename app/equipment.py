@@ -183,13 +183,13 @@ def archive_test_device(device_id):
 
 @bp.route("/api/tickets/<int:ticket_id>/equipment-test/checks", methods=["GET"])
 def checks_for_ticket(ticket_id):
-    """Checkliste passend zur Schutzklasse des Geräts am Laufzettel.
+    """Checkliste für Geräte-Reparaturen.
     
-    Seit 2026-09-05: use_vde_conform=False (UNI-T UT-501 statt VDE).
-    Bei Schul-Tickets (school_data != NULL): is_school_workshop=True (KEINE Isolationsprüfung!)
+    WICHTIG: UT-501 ist NUR für Leitungen/Kabel (NICHT für Geräte)!
+    Für alle Geräte: NUR Besichtigung + Funktionsprüfung.
     """
     conn = get_request_db(flask.current_app)
-    ticket = conn.execute("SELECT id, school_data FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
+    ticket = conn.execute("SELECT id FROM tickets WHERE id = ?", (ticket_id,)).fetchone()
     if ticket is None:
         return {"error": "Laufzettel nicht gefunden"}, 404
     
@@ -197,16 +197,12 @@ def checks_for_ticket(ticket_id):
     if device is None or not device["schutzklasse"]:
         return {"error": "Gerät hat keine Schutzklasse — bitte im Geräte-Tab hinterlegen"}, 409
     
-    # Schul-Workshop erkennen (school_data JSON mit Klasse/Schule)
-    # sqlite3.Row als Dict convertieren
-    ticket_dict = dict(ticket) if ticket else {}
-    is_school_workshop = ticket_dict.get('school_data') is not None
-    
+    # is_school_workshop wird ignoriert — ALLE Geräte haben gleiche Prüfung!
     return {
         "protection_class": device["schutzklasse"],
         "heating_kw": device["heating_kw"],
-        "is_school_workshop": is_school_workshop,
-        "checks": checks_for(device["schutzklasse"], device["heating_kw"], use_vde_conform=False, is_school_workshop=is_school_workshop),
+        "is_school_workshop": False,  # Irrelevant — keine Isolationsprüfung!
+        "checks": checks_for(device["schutzklasse"], device["heating_kw"], use_vde_conform=False),
     }
 
 

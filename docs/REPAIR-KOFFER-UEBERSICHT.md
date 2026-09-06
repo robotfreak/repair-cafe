@@ -8,17 +8,18 @@
 
 Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registriert:
 
-| ID | Name | Typ | Notes |
-|----|------|-----|-------|
-| **2** | UNI-T UT-501 | Isolationsprüfgerät | 500V DC, **NUR für 230V-Geräte!** |
-| **4** | Multimeter Digital (Koffer) | Universal-Multimeter | **HAUPTGERÄT für Schulen!** |
+| ID | Name | Typ | Verwendung |
+|----|------|-----|------------|
+| **2** | UNI-T UT-501 | Isolationsprüfgerät | ❌ **NUR für Leitungen/Kabel!** (NICHT für Geräte) |
+| **4** | Multimeter Digital (Koffer) | Universal-Multimeter | ✅ **HAUPTGERÄT für ALLE Reparaturen!** |
 | **5** | Lötkolben 25W (Koffer) | Werkzeug | Elektronik-Reparaturen |
 | **6** | Werkzeug-Set (Koffer) | Werkzeug-Set | Schraubendreher, Zangen, etc. |
 | **—** | Tablet (Fully Browser) | Anzeige-Gerät | Digitale Dokumentation, Dark-Mode |
 
 **WICHTIG:**
-- 🔦 **Dynamo-Taschenlampen (5V, SK III):** NUR Multimeter verwenden!
-- ⚡ **230V-Geräte (SK I):** UT-501 für Isolationsprüfung (Erwachsene)
+- 🔦 **Geräte-Reparaturen (ALLE):** NUR Multimeter verwenden!
+- 🔌 **Leitungen/Kabel:** UT-501 für Isolationswiderstand (wenn nötig)
+- ⚡ **KEINE Isolationsprüfung an Geräten!** (UT-501 nur für lose Kabel)
 
 ---
 
@@ -55,9 +56,9 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 - **Status:** Nicht VDE-konform (nur für Repair-Café intern)
 
 **Einsatz:**
-- ⚠️ **NICHT für Schul-Workshops!** (Dynamo-Lampen = Schutzklasse III, 5V)
-- Nur für **230V-Geräte** im Erwachsenen-Repair-Café
-- Isolationsprüfung zwischen Leiter und Schutzleiter (SK I)
+- ⚠️ **NUR für Leitungen/Kabel!** (NICHT für fertige Geräte!)
+- Isolationswiderstand zwischen Adern messen
+- **KEINE Geräte-Prüfung!** (weder SK I, II, noch III!)
 
 **Anleitung:** → [UNI-T UT-501 Bedienanleitung](file:///home/pi/ki-os/vault/10-Projekte/080-Reparatur-Koffer/UNI-T-UT501-Anleitung.md)
 
@@ -75,11 +76,11 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 - **Status:** Im Repair-Koffer enthalten
 
 **Einsatz:**
-- ✅ **HAUPTGERÄT für Schul-Workshops!**
+- ✅ **HAUPTGERÄT für ALLE Reparaturen!**
 - Fehlersuche (Kabel, Kontakte, Schalter)
 - Dynamo-Spannung prüfen (5-12V DC)
 - Durchgangsprüfung (Kabel defekt?)
-- Für alle Klassenstufen
+- Für alle Klassenstufen und Gerätetypen
 
 **Anleitung:** → [Fehler-Checkliste Arbeitsblatt 2](file:///home/pi/ki-os/vault/10-Projekte/080-Reparatur-Koffer/Arbeitsblatt-02-Fehler-Checkliste.md)
 
