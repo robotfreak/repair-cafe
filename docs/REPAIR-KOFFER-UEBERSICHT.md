@@ -10,11 +10,15 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 
 | ID | Name | Typ | Notes |
 |----|------|-----|-------|
-| **2** | UNI-T UT-501 | Isolationsprüfgerät | 500V DC, nicht VDE-konform |
-| **4** | Multimeter Digital (Koffer) | Universal-Multimeter | Durchgang, Spannung, Widerstand |
+| **2** | UNI-T UT-501 | Isolationsprüfgerät | 500V DC, **NUR für 230V-Geräte!** |
+| **4** | Multimeter Digital (Koffer) | Universal-Multimeter | **HAUPTGERÄT für Schulen!** |
 | **5** | Lötkolben 25W (Koffer) | Werkzeug | Elektronik-Reparaturen |
 | **6** | Werkzeug-Set (Koffer) | Werkzeug-Set | Schraubendreher, Zangen, etc. |
 | **—** | Tablet (Fully Browser) | Anzeige-Gerät | Digitale Dokumentation, Dark-Mode |
+
+**WICHTIG:**
+- 🔦 **Dynamo-Taschenlampen (5V, SK III):** NUR Multimeter verwenden!
+- ⚡ **230V-Geräte (SK I):** UT-501 für Isolationsprüfung (Erwachsene)
 
 ---
 
@@ -51,9 +55,9 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 - **Status:** Nicht VDE-konform (nur für Repair-Café intern)
 
 **Einsatz:**
-- Isolationsprüfung an Dynamo-Taschenlampen
-- Schul-Workshops (ab Klasse 5)
-- Repair-AGs an Schulen
+- ⚠️ **NICHT für Schul-Workshops!** (Dynamo-Lampen = Schutzklasse III, 5V)
+- Nur für **230V-Geräte** im Erwachsenen-Repair-Café
+- Isolationsprüfung zwischen Leiter und Schutzleiter (SK I)
 
 **Anleitung:** → [UNI-T UT-501 Bedienanleitung](file:///home/pi/ki-os/vault/10-Projekte/080-Reparatur-Koffer/UNI-T-UT501-Anleitung.md)
 
@@ -71,8 +75,10 @@ Alle Messgeräte sind im Repair-Café System unter `/api/test-devices` registrie
 - **Status:** Im Repair-Koffer enthalten
 
 **Einsatz:**
+- ✅ **HAUPTGERÄT für Schul-Workshops!**
 - Fehlersuche (Kabel, Kontakte, Schalter)
-- Systematische Prüfung (siehe Arbeitsblatt 2)
+- Dynamo-Spannung prüfen (5-12V DC)
+- Durchgangsprüfung (Kabel defekt?)
 - Für alle Klassenstufen
 
 **Anleitung:** → [Fehler-Checkliste Arbeitsblatt 2](file:///home/pi/ki-os/vault/10-Projekte/080-Reparatur-Koffer/Arbeitsblatt-02-Fehler-Checkliste.md)
