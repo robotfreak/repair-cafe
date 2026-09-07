@@ -4,3 +4,6 @@
 [submodule "vault"]
 	path = vault
 	url = git@github.com:robotfreak/vault.git
+[submodule "web-dashboard"]
+	path = web-dashboard
+	url = git@github.com:robotfreak/web-dashboard.git
