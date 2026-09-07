@@ -110,19 +110,29 @@ def _save_document_file(data_dir, data, ext):
 
 
 def _validate_reference_ids(conn, device_id, ticket_id, test_device_id):
-    """Prüft device_id/ticket_id/test_device_id (None = nicht gesetzt).
+    """Prüft device_id/ticket_id/test_device_id (mindestens eine erforderlich).
 
     Rückgabe: None bei Erfolg, sonst (status, fehlermeldung).
     """
+    # Mindestens eine ID muss gesetzt sein
+    if device_id is None and ticket_id is None and test_device_id is None:
+        return 400, "Mindestens eine Zuordnung erforderlich (device_id, ticket_id, oder test_device_id)"
+    
+    # device_id prüfen wenn gesetzt
     if device_id is not None:
         if conn.execute("SELECT id FROM devices WHERE id = ?", (device_id,)).fetchone() is None:
             return 404, "Gerät nicht gefunden"
+    
+    # ticket_id prüfen wenn gesetzt
     if ticket_id is not None:
         if conn.execute("SELECT id FROM tickets WHERE id = ?", (ticket_id,)).fetchone() is None:
             return 404, "Laufzettel nicht gefunden"
+    
+    # test_device_id prüfen wenn gesetzt
     if test_device_id is not None:
         if conn.execute("SELECT id FROM test_devices WHERE id = ?", (test_device_id,)).fetchone() is None:
             return 404, "Messgerät nicht gefunden"
+    
     return None
 
 
