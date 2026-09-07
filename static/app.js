@@ -1517,7 +1517,9 @@ function testDeviceRow(device) {
             
             const docSection = el('div', { class: 'device-docs' },
               el('h4', {}, 'Dokumente & Handbücher'),
-              el('div', { class: 'doc-form-row' }, docFormTitle, docFormType, docFormUrl, docFormBtn),
+              el('div', { class: 'doc-form-row' }, docFormTitle, docFormType),
+              el('div', { class: 'doc-form-row' }, docFormFile, 'oder', docFormUrl),
+              el('div', { class: 'doc-form-row' }, docFormBtn),
               docList);
             
             details.replaceChildren(
