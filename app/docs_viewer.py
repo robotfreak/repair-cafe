@@ -13,17 +13,9 @@ def get_vault_structure():
     """Gibt die Vault-Ordnerstruktur als Dict zurück."""
     structure = {}
     
-    # Hauptordner definieren (in Reihenfolge)
+    # NUR Repair-Café Bereich anzeigen!
     folder_order = [
-        '20-Bereiche',  # ← START-ORDNER!
-        '10-Projekte',
-        '00-Inbox',
-        '30-Journal',
-        '40-Ressourcen',
-        '50-Dashboard',
-        '60-Architektur',
-        '90-Templates',
-        '99-Assets'
+        '20-Bereiche/Repair-Cafe',  # ← NUR Repair-Café!
     ]
     
     for folder_name in folder_order:
@@ -40,24 +32,7 @@ def get_vault_structure():
                     'full_path': str(md_file),
                 })
             
-            # Unterordner durchsuchen (z.B. 10-Projekte/080-Reparatur-Koffer/)
-            for subdir in folder_path.iterdir():
-                if subdir.is_dir() and not subdir.name.startswith('.'):
-                    subdir_files = []
-                    for md_file in subdir.glob('*.md'):
-                        title = md_file.stem.replace('-', ' ').replace('_', ' ')
-                        subdir_files.append({
-                            'name': md_file.name,
-                            'title': title,
-                            'path': f'{folder_name}/{subdir.name}/{md_file.name}',
-                            'full_path': str(md_file),
-                        })
-                    
-                    if subdir_files:
-                        files.extend(subdir_files)
-            
-            if files:
-                structure[folder_name] = sorted(files, key=lambda x: x['name'])
+            structure[folder_name] = files
     
     return structure
 
