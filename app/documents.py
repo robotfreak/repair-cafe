@@ -109,8 +109,8 @@ def _save_document_file(data_dir, data, ext):
     return f"documents/{filename}", text_content
 
 
-def _validate_reference_ids(conn, device_id, ticket_id):
-    """Prüft device_id/ticket_id (None = nicht gesetzt).
+def _validate_reference_ids(conn, device_id, ticket_id, test_device_id):
+    """Prüft device_id/ticket_id/test_device_id (None = nicht gesetzt).
 
     Rückgabe: None bei Erfolg, sonst (status, fehlermeldung).
     """
@@ -120,6 +120,9 @@ def _validate_reference_ids(conn, device_id, ticket_id):
     if ticket_id is not None:
         if conn.execute("SELECT id FROM tickets WHERE id = ?", (ticket_id,)).fetchone() is None:
             return 404, "Laufzettel nicht gefunden"
+    if test_device_id is not None:
+        if conn.execute("SELECT id FROM test_devices WHERE id = ?", (test_device_id,)).fetchone() is None:
+            return 404, "Messgerät nicht gefunden"
     return None
 
 
@@ -147,6 +150,7 @@ def create_document():
         doc_type = payload.get("doc_type")
         device_id = _parse_int(payload.get("device_id"))
         ticket_id = _parse_int(payload.get("ticket_id"))
+        test_device_id = _parse_int(payload.get("test_device_id"))
         file_storage = None
         url = payload.get("url")
     else:
@@ -154,6 +158,7 @@ def create_document():
         doc_type = flask.request.form.get("doc_type")
         device_id = _parse_int(flask.request.form.get("device_id"))
         ticket_id = _parse_int(flask.request.form.get("ticket_id"))
+        test_device_id = _parse_int(flask.request.form.get("test_device_id"))
         file_storage = flask.request.files.get("file")
         url = flask.request.form.get("url") or None
 
@@ -169,7 +174,7 @@ def create_document():
     if doc_type not in DOC_TYPES:
         return {"error": TYPE_MSG}, 400
 
-    ref_error = _validate_reference_ids(conn, device_id, ticket_id)
+    ref_error = _validate_reference_ids(conn, device_id, ticket_id, test_device_id)
     if ref_error is not None:
         status, message = ref_error
         return {"error": message}, status
@@ -227,10 +232,10 @@ def create_document():
             return {"error": "Dieses Dokument existiert an dieser Stelle bereits (identische Datei)"}, 409
 
     cur = conn.execute(
-        "INSERT INTO documents (device_id, ticket_id, title, doc_type, url, file_path,"
+        "INSERT INTO documents (device_id, ticket_id, test_device_id, title, doc_type, url, file_path,"
         " text_content, content_hash)"
-        " VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        (device_id, ticket_id, title, doc_type, url_value, rel_path, text_content, digest),
+        " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (device_id, ticket_id, test_device_id, title, doc_type, url_value, rel_path, text_content, digest),
     )
     conn.commit()
 
@@ -280,7 +285,7 @@ def list_documents():
 
     clauses = []
     params = []
-    for param, column in (("device_id", "device_id"), ("ticket_id", "ticket_id")):
+    for param, column in (("device_id", "device_id"), ("ticket_id", "ticket_id"), ("test_device_id", "test_device_id")):
         raw = flask.request.args.get(param)
         if raw is None or raw == "":
             continue

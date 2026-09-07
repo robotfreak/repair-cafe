@@ -1486,7 +1486,8 @@ function testDeviceRow(device) {
                 const formData = new FormData();
                 formData.append('title', docFormTitle.value.trim());
                 formData.append('doc_type', docFormType.value);
-                formData.append('device_id', full.id);
+                formData.append('device_id', full.id);  // Geräte-ID für Geräte
+                formData.append('test_device_id', full.id);  // Messgeräte-ID für Messgeräte
                 formData.append('file', docFormFile.files[0]);
                 
                 const resp = await fetch('/api/documents', {
@@ -1502,7 +1503,8 @@ function testDeviceRow(device) {
                   body: {
                     title: docFormTitle.value.trim(),
                     doc_type: docFormType.value,
-                    device_id: full.id,
+                    device_id: full.id,  // Für Geräte
+                    test_device_id: full.id,  // Für Messgeräte
                     url: docFormUrl.value.trim(),
                   },
                 });
