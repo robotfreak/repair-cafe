@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ folder }} - Repair-Café Verwaltung{% endblock %}
+{% block content %}
+<div class="vault-nav mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">🏠 Übersicht</a></li>
+            <li class="breadcrumb-item active">{{ folder }}</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <h2>📁 {{ folder }}</h2>
+        <p class="text-muted">Verfügbare Dokumente:</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    {% if files %}
+        {% for file in files %}
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">📄 {{ file.replace('.md', '') }}</h5>
+                    <a href="/vault/{{ folder }}/{{ file }}" class="btn btn-primary">Öffnen →</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-warning">
+                Keine Markdown-Dateien in diesem Ordner gefunden.
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="mt-4">
+    <a href="/" class="btn btn-secondary">← Zurück zur Übersicht</a>
+</div>
+{% endblock %}

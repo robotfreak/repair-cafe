@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} - Repair-Café Verwaltung{% endblock %}
+{% block content %}
+<div class="vault-nav mb-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="/">🏠 Übersicht</a></li>
+            <li class="breadcrumb-item active">{{ title }}</li>
+        </ol>
+    </nav>
+</div>
+<div class="markdown-body">
+    {{ content|safe }}
+</div>
+{% endblock %}
