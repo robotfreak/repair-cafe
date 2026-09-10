@@ -1721,6 +1721,35 @@ function deviceRow(device, tickets) {
 if (!location.hash) location.hash = '#/board';
 render();
 
+/* ====================== Dark Mode Toggle ====================== */
+
+(function initThemeToggle() {
+  const btn = document.getElementById('btn-theme-toggle');
+  if (!btn) return;
+  
+  // Gespeichertes Theme laden oder System-Preference
+  const savedTheme = localStorage.getItem('rc_theme');
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+  
+  // Theme anwenden
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('rc_theme', theme);
+    btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+  }
+  
+  applyTheme(initialTheme);
+  
+  // Toggle bei Klick
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    showToast(next === 'dark' ? 'Dark Mode aktiviert' : 'Light Mode aktiviert');
+  });
+})();
+
 /* ====================== Techniker:in-Name (localStorage) ====================== */
 
 (function initAuthorField() {
