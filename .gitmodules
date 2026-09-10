@@ -7,3 +7,6 @@
 [submodule "web-dashboard"]
 	path = web-dashboard
 	url = git@github.com:robotfreak/web-dashboard.git
+[submodule "vault-renderer"]
+	path = vault-renderer
+	url = git@github.com:robotfreak/vault-renderer.git
